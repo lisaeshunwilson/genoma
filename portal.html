@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Terms of Use — Genoma Institute</title>
-<meta name="description" content="Terms of use for the Genoma Institute website.">
+<meta name="robots" content="noindex, nofollow">
+<title>Team Portal — Genoma Institute</title>
 <link rel="icon" type="image/png" href="images/Genoma-Logo.png">
 <link rel="apple-touch-icon" href="images/Genoma-Logo.png">
-<meta property="og:title" content="Terms of Use — Genoma Institute">
-<meta property="og:description" content="Terms of use for the Genoma Institute website.">
+<meta property="og:title" content="Team Portal — Genoma Institute">
+<meta property="og:description" content="Private team portal for Genoma Institute staff and collaborators.">
 <meta property="og:image" content="https://genomainstitute.org/images/Genoma-Logo.png">
-<meta property="og:url" content="https://genomainstitute.org/terms.html">
+<meta property="og:url" content="https://genomainstitute.org/portal.html">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -207,6 +207,51 @@
   .legal-content li{margin-bottom:6px;}
   .legal-updated{font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .portal-wrap{max-width:900px;margin:0 auto;padding:60px 32px 100px;}
+  .auth-box{max-width:400px;margin:80px auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:36px;}
+  .auth-box h2{font-size:1.4rem;margin-bottom:6px;}
+  .auth-box p.sub{color:var(--text-muted);font-size:0.88rem;margin-bottom:24px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;}
+  .field input, .field select, .field textarea{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:0.92rem;}
+  .field textarea{min-height:90px;resize:vertical;}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--accent);}
+  .auth-toggle{text-align:center;margin-top:14px;font-size:0.85rem;color:var(--text-muted);}
+  .auth-toggle a{color:var(--accent);cursor:pointer;}
+  .msg{font-size:0.85rem;padding:10px 14px;border-radius:5px;margin-bottom:14px;}
+  .msg.error{background:rgba(232,115,90,0.14);color:#E8735A;}
+  .msg.ok{background:var(--accent-soft);color:var(--accent);}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding-bottom:24px;border-bottom:1px solid var(--border);margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+  .who{font-size:0.88rem;color:var(--text-muted);}
+  .who strong{color:var(--text);}
+  .role-badge{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:3px 9px;border-radius:10px;margin-left:8px;}
+  .tabs{display:flex;gap:8px;margin-bottom:32px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+  .tab-btn{font-family:'IBM Plex Mono',monospace;font-size:0.82rem;padding:12px 18px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  .entry-form{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px;margin-bottom:28px;}
+  .entry-list{display:flex;flex-direction:column;gap:10px;}
+  .entry-row{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:14px 18px;}
+  .entry-row .meta{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--text-muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:10px;}
+  .entry-row .body{font-size:0.9rem;color:var(--text);}
+  .status-pill{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;padding:2px 8px;border-radius:9px;border:1px solid var(--border);cursor:pointer;}
+  .status-pill.done{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+  .total-bar{display:flex;justify-content:space-between;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:14px 20px;margin-bottom:20px;}
+  .total-bar .num{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.4rem;color:var(--accent);}
+  .receipt-link{color:var(--accent);font-size:0.78rem;}
+  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .bar-label{width:150px;font-size:0.85rem;color:var(--text-muted);flex-shrink:0;}
+  .bar-track{flex:1;background:var(--surface-2);border-radius:4px;height:10px;overflow:hidden;}
+  .bar-fill{background:var(--accent);height:100%;}
+  .bar-amount{font-family:'IBM Plex Mono',monospace;font-size:0.8rem;width:80px;text-align:right;}
+  .btn-small{font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:9px 16px;border-radius:5px;background:var(--accent);color:#0C1710;border:none;cursor:pointer;}
+  .btn-small.outline{background:none;border:1px solid var(--border);color:var(--text);}
+  .empty-note{color:var(--text-muted);font-size:0.88rem;font-style:italic;}
+  #config-warning{display:none;background:rgba(232,115,90,0.14);border:1px solid #E8735A;color:#E8735A;padding:14px 18px;border-radius:8px;margin-bottom:24px;font-size:0.88rem;}
+</style>
 </head>
 <body>
 
@@ -226,6 +271,7 @@
       <a href="index.html#history">Why Us</a>
       <a href="team.html">Team</a>
       <a href="baseread.html">BaseRead</a>
+      <a href="hiring.html">Careers</a>
       <a href="index.html#contact" class="nav-cta">Partner With Us</a>
     </div>
     <button class="menu-btn" aria-label="Menu">☰</button>
@@ -234,55 +280,127 @@
 
 <section class="page-hero">
   <div class="wrap">
-    <div class="breadcrumb"><a href="index.html">Home</a> / Terms</div>
-    <span class="eyebrow">Legal</span>
-    <h1>Terms of Use</h1>
+    <div class="breadcrumb"><a href="index.html">Home</a> / Team Portal</div>
+    <span class="eyebrow">Private Team Page</span>
+    <h1>Team Portal</h1>
+    <p>Lab notebook, task tracker, and budget log — for the Genoma Institute team.</p>
   </div>
 </section>
 
-<section>
-  <div class="wrap">
-    <div class="notice-banner">
-      <strong>Placeholder draft.</strong> This is a starting template, not legal advice — have a lawyer review it before it goes live, and fill in the bracketed details.
-    </div>
-    <div class="legal-content">
-      <p class="legal-updated">Last updated: [Month Day, Year]</p>
+<div class="portal-wrap">
 
-      <h2>1. Acceptance of Terms</h2>
-      <p>By accessing or using the Genoma Institute website ("Site"), you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the Site.</p>
+  <div id="config-warning">
+    <strong>Setup needed:</strong> add your Supabase Project URL and anon key at the top of the script in this file before this page will work.
+  </div>
 
-      <h2>2. About Genoma Institute</h2>
-      <p>Genoma Institute is a nonprofit organization dedicated to curing genetic disease through open research benchmarks, laboratory research, and public science communication. [Insert legal entity name, nonprofit status/EIN, and state of incorporation.]</p>
-
-      <h2>3. Use of the Site</h2>
-      <p>You agree to use this Site only for lawful purposes and in a way that does not infringe the rights of, restrict, or inhibit anyone else's use of the Site. Prohibited behavior includes harassing or causing distress to any person, transmitting obscene or offensive content, or disrupting the normal flow of dialogue on the Site.</p>
-
-      <h2>4. Intellectual Property</h2>
-      <p>All content on this Site — including text, graphics, logos, and the Genoma Institute name and mark — is the property of Genoma Institute or its licensors and is protected by copyright and trademark law. You may not reproduce, distribute, or create derivative works without prior written permission.</p>
-
-      <h2>5. Donations &amp; Partnerships</h2>
-      <p>[If the Site accepts donations or processes payments, describe how funds are used, refund policy, and any third-party payment processor terms that apply. Insert details of your fiscal sponsor or nonprofit status here.]</p>
-
-      <h2>6. No Professional Advice</h2>
-      <p>Content on this Site is provided for general informational purposes only and does not constitute medical, legal, or financial advice. Genoma Institute's research and communications should not be relied upon as a substitute for professional medical guidance.</p>
-
-      <h2>7. Disclaimers</h2>
-      <p>This Site is provided "as is" without warranties of any kind, express or implied. Genoma Institute does not warrant that the Site will be uninterrupted, error-free, or free of harmful components.</p>
-
-      <h2>8. Limitation of Liability</h2>
-      <p>To the fullest extent permitted by law, Genoma Institute shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Site.</p>
-
-      <h2>9. Governing Law</h2>
-      <p>These Terms are governed by the laws of [Insert State/Jurisdiction], without regard to its conflict of law principles.</p>
-
-      <h2>10. Changes to These Terms</h2>
-      <p>Genoma Institute may update these Terms from time to time. Continued use of the Site after changes are posted constitutes acceptance of the revised Terms.</p>
-
-      <h2>11. Contact Us</h2>
-      <p>Questions about these Terms can be sent to <a href="mailto:info@genomainstitute.org" style="color:var(--accent);">info@genomainstitute.org</a>.</p>
+  <!-- AUTH VIEW -->
+  <div id="auth-view">
+    <div class="auth-box">
+      <h2 id="auth-title">Log In</h2>
+      <p class="sub" id="auth-sub">Use your team email to access the portal.</p>
+      <div id="auth-msg"></div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="you@genomainstitute.org">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="••••••••">
+      </div>
+      <button class="btn-small" style="width:100%;" id="auth-submit-btn" onclick="handleAuthSubmit()">Log In</button>
+      <div class="auth-toggle" id="auth-toggle-text">
+        New here? <a onclick="toggleAuthMode()">Create an account</a>
+      </div>
     </div>
   </div>
-</section>
+
+  <!-- APP VIEW -->
+  <div id="app-view" style="display:none;">
+    <div class="topbar">
+      <div class="who">Logged in as <strong id="user-email"></strong><span class="role-badge" id="user-role"></span></div>
+      <button class="btn-small outline" onclick="signOut()">Sign Out</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="notebook" onclick="switchTab('notebook')">Notebook</button>
+      <button class="tab-btn" data-tab="tasks" onclick="switchTab('tasks')">Tasks</button>
+      <button class="tab-btn" data-tab="budget" onclick="switchTab('budget')">Budget</button>
+      <button class="tab-btn" data-tab="admin" id="tab-admin-btn" onclick="switchTab('admin')" style="display:none;">Team Overview</button>
+    </div>
+
+    <!-- NOTEBOOK -->
+    <div class="tab-panel active" id="panel-notebook">
+      <div class="entry-form">
+        <div class="field">
+          <label>Today's Notes</label>
+          <textarea id="notebook-input" placeholder="What did you work on / observe today?"></textarea>
+        </div>
+        <button class="btn-small" onclick="addNotebookEntry()">Add Entry</button>
+      </div>
+      <div class="entry-list" id="notebook-list"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="tab-panel" id="panel-tasks">
+      <div class="entry-form">
+        <div class="field">
+          <label>New Task</label>
+          <input type="text" id="task-input" placeholder="e.g. Review CALI benchmark dataset">
+        </div>
+        <button class="btn-small" onclick="addTask()">Add Task</button>
+      </div>
+      <div class="entry-list" id="tasks-list"></div>
+    </div>
+
+    <!-- BUDGET -->
+    <div class="tab-panel" id="panel-budget">
+      <div class="total-bar">
+        <span>Your total logged spend</span>
+        <span class="num" id="my-total">$0.00</span>
+      </div>
+      <div class="entry-form">
+        <div class="field">
+          <label>Amount ($)</label>
+          <input type="number" step="0.01" id="expense-amount" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="expense-category">
+            <option>Software / Tools</option>
+            <option>Lab Supplies</option>
+            <option>Travel</option>
+            <option>Events / Conferences</option>
+            <option>Office Supplies</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <input type="text" id="expense-description" placeholder="What was this for?">
+        </div>
+        <div class="field">
+          <label>Receipt Photo (optional)</label>
+          <input type="file" id="expense-receipt" accept="image/*,.pdf">
+        </div>
+        <button class="btn-small" onclick="addExpense()">Log Expense</button>
+      </div>
+      <div class="entry-list" id="expenses-list"></div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="tab-panel" id="panel-admin">
+      <h3 style="margin-bottom:16px;">Spending by Person</h3>
+      <div id="admin-bars" style="margin-bottom:36px;"></div>
+      <h3 style="margin-bottom:16px;">All Expenses</h3>
+      <div class="entry-list" id="admin-expenses-list" style="margin-bottom:36px;"></div>
+      <h3 style="margin-bottom:16px;">All Tasks</h3>
+      <div class="entry-list" id="admin-tasks-list" style="margin-bottom:36px;"></div>
+      <h3 style="margin-bottom:16px;">All Notebook Entries</h3>
+      <div class="entry-list" id="admin-notebook-list"></div>
+    </div>
+  </div>
+
+</div>
 
 <footer>
   <div class="wrap footer-inner">
@@ -300,6 +418,7 @@
       <a href="index.html#history">Why Us</a>
       <a href="team.html">Team</a>
       <a href="baseread.html">BaseRead</a>
+      <a href="hiring.html">Careers</a>
       <a href="index.html#contact">Contact</a>
       <a href="terms.html">Terms</a>
       <a href="privacy.html">Privacy</a>
@@ -309,26 +428,215 @@
 </footer>
 
 <script>
-  const reveals = document.querySelectorAll('.reveal');
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); } });
-  },{threshold:0.15});
-  reveals.forEach(el=>io.observe(el));
+  // ============================================================
+  // FILL THESE IN from Supabase → Project Settings → API
+  // ============================================================
+  const SUPABASE_URL = "https://tekxdedcticnjoplmjie.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_kRWTEEY4wejH0CbRxsNowA_XOujD_4j";
+  // ============================================================
 
-  const menuBtn = document.querySelector('.menu-btn');
-  const navlinks = document.querySelector('.navlinks');
-  menuBtn?.addEventListener('click', ()=>{
-    const isOpen = navlinks.style.display === 'flex';
-    navlinks.style.display = isOpen ? 'none' : 'flex';
-    navlinks.style.position='absolute';
-    navlinks.style.top='76px';
-    navlinks.style.left='0';
-    navlinks.style.right='0';
-    navlinks.style.flexDirection='column';
-    navlinks.style.background='#171D18';
-    navlinks.style.padding='24px 32px';
-    navlinks.style.borderBottom='1px solid #2A332B';
-  });
+  let sb = null;
+  let currentUser = null;
+  let currentProfile = null;
+  let isSignUpMode = false;
+
+  if (SUPABASE_URL.startsWith("YOUR_") || SUPABASE_ANON_KEY.startsWith("YOUR_")) {
+    document.getElementById('config-warning').style.display = 'block';
+  } else {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    init();
+  }
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      await loadProfileAndApp();
+    }
+  }
+
+  function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    document.getElementById('auth-title').textContent = isSignUpMode ? 'Create Account' : 'Log In';
+    document.getElementById('auth-submit-btn').textContent = isSignUpMode ? 'Sign Up' : 'Log In';
+    document.getElementById('auth-toggle-text').innerHTML = isSignUpMode
+      ? 'Already have an account? <a onclick="toggleAuthMode()">Log in</a>'
+      : "New here? <a onclick=\"toggleAuthMode()\">Create an account</a>";
+    document.getElementById('auth-msg').innerHTML = '';
+  }
+
+  async function handleAuthSubmit() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const msgEl = document.getElementById('auth-msg');
+    msgEl.innerHTML = '';
+    if (!email || !password) {
+      msgEl.innerHTML = '<div class="msg error">Enter both email and password.</div>';
+      return;
+    }
+    if (isSignUpMode) {
+      const { error } = await sb.auth.signUp({ email, password });
+      if (error) { msgEl.innerHTML = `<div class="msg error">${error.message}</div>`; return; }
+      msgEl.innerHTML = '<div class="msg ok">Account created! Check your email to confirm, then log in.</div>';
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) { msgEl.innerHTML = `<div class="msg error">${error.message}</div>`; return; }
+      await loadProfileAndApp();
+    }
+  }
+
+  async function signOut() {
+    await sb.auth.signOut();
+    location.reload();
+  }
+
+  async function loadProfileAndApp() {
+    const { data: { user } } = await sb.auth.getUser();
+    currentUser = user;
+    let { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    currentProfile = profile;
+
+    document.getElementById('auth-view').style.display = 'none';
+    document.getElementById('app-view').style.display = 'block';
+    document.getElementById('user-email').textContent = user.email;
+    document.getElementById('user-role').textContent = profile ? profile.role : 'intern';
+
+    if (profile && profile.role === 'admin') {
+      document.getElementById('tab-admin-btn').style.display = 'inline-flex';
+      loadAdminOverview();
+    }
+
+    loadNotebook();
+    loadTasks();
+    loadExpenses();
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+  }
+
+  function fmtDate(d) {
+    return new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }
+
+  // ---------- NOTEBOOK ----------
+  async function addNotebookEntry() {
+    const content = document.getElementById('notebook-input').value.trim();
+    if (!content) return;
+    await sb.from('notebook_entries').insert({ user_id: currentUser.id, content });
+    document.getElementById('notebook-input').value = '';
+    loadNotebook();
+  }
+
+  async function loadNotebook() {
+    const { data } = await sb.from('notebook_entries').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    const el = document.getElementById('notebook-list');
+    el.innerHTML = (!data || data.length === 0)
+      ? '<p class="empty-note">No entries yet.</p>'
+      : data.map(e => `<div class="entry-row"><div class="meta"><span>${fmtDate(e.created_at)}</span></div><div class="body">${escapeHtml(e.content)}</div></div>`).join('');
+  }
+
+  // ---------- TASKS ----------
+  async function addTask() {
+    const description = document.getElementById('task-input').value.trim();
+    if (!description) return;
+    await sb.from('tasks').insert({ user_id: currentUser.id, description });
+    document.getElementById('task-input').value = '';
+    loadTasks();
+  }
+
+  async function toggleTaskStatus(id, current) {
+    const next = current === 'done' ? 'in_progress' : 'done';
+    await sb.from('tasks').update({ status: next }).eq('id', id);
+    loadTasks();
+  }
+
+  async function loadTasks() {
+    const { data } = await sb.from('tasks').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    const el = document.getElementById('tasks-list');
+    el.innerHTML = (!data || data.length === 0)
+      ? '<p class="empty-note">No tasks yet.</p>'
+      : data.map(t => `<div class="entry-row"><div class="meta"><span>${fmtDate(t.created_at)}</span><span class="status-pill ${t.status==='done'?'done':''}" onclick="toggleTaskStatus('${t.id}','${t.status}')">${t.status==='done'?'Done':'In Progress'}</span></div><div class="body">${escapeHtml(t.description)}</div></div>`).join('');
+  }
+
+  // ---------- BUDGET ----------
+  async function addExpense() {
+    const amount = parseFloat(document.getElementById('expense-amount').value);
+    const category = document.getElementById('expense-category').value;
+    const description = document.getElementById('expense-description').value.trim();
+    const fileInput = document.getElementById('expense-receipt');
+    const file = fileInput.files[0];
+    if (!amount || amount <= 0) { alert('Enter a valid amount.'); return; }
+
+    let receipt_path = null;
+    if (file) {
+      receipt_path = `${currentUser.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await sb.storage.from('receipts').upload(receipt_path, file);
+      if (uploadError) { alert('Receipt upload failed: ' + uploadError.message); receipt_path = null; }
+    }
+
+    await sb.from('expenses').insert({ user_id: currentUser.id, amount, category, description, receipt_path });
+    document.getElementById('expense-amount').value = '';
+    document.getElementById('expense-description').value = '';
+    fileInput.value = '';
+    loadExpenses();
+  }
+
+  async function viewReceipt(path) {
+    const { data, error } = await sb.storage.from('receipts').createSignedUrl(path, 60);
+    if (error) { alert('Could not load receipt.'); return; }
+    window.open(data.signedUrl, '_blank');
+  }
+
+  async function loadExpenses() {
+    const { data } = await sb.from('expenses').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    const el = document.getElementById('expenses-list');
+    const total = (data || []).reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    document.getElementById('my-total').textContent = '$' + total.toFixed(2);
+    el.innerHTML = (!data || data.length === 0)
+      ? '<p class="empty-note">No expenses logged yet.</p>'
+      : data.map(e => `<div class="entry-row"><div class="meta"><span>${fmtDate(e.created_at)} · ${e.category||''}</span><span>$${parseFloat(e.amount).toFixed(2)}</span></div><div class="body">${escapeHtml(e.description||'')}</div>${e.receipt_path ? `<div style="margin-top:8px;"><a class="receipt-link" onclick="viewReceipt('${e.receipt_path}')">View Receipt →</a></div>` : ''}</div>`).join('');
+  }
+
+  // ---------- ADMIN OVERVIEW ----------
+  async function loadAdminOverview() {
+    const { data: expenses } = await sb.from('expenses').select('*, profiles(email)').order('created_at', { ascending: false });
+    const { data: tasks } = await sb.from('tasks').select('*, profiles(email)').order('created_at', { ascending: false });
+    const { data: notes } = await sb.from('notebook_entries').select('*, profiles(email)').order('created_at', { ascending: false });
+
+    // spending by person
+    const byPerson = {};
+    (expenses || []).forEach(e => {
+      const who = e.profiles ? e.profiles.email : 'Unknown';
+      byPerson[who] = (byPerson[who] || 0) + parseFloat(e.amount);
+    });
+    const maxAmt = Math.max(1, ...Object.values(byPerson));
+    const barsEl = document.getElementById('admin-bars');
+    barsEl.innerHTML = Object.keys(byPerson).length === 0
+      ? '<p class="empty-note">No expenses logged yet.</p>'
+      : Object.entries(byPerson).sort((a,b) => b[1]-a[1]).map(([who, amt]) =>
+          `<div class="bar-row"><span class="bar-label">${who}</span><div class="bar-track"><div class="bar-fill" style="width:${(amt/maxAmt*100)}%"></div></div><span class="bar-amount">$${amt.toFixed(2)}</span></div>`
+        ).join('');
+
+    document.getElementById('admin-expenses-list').innerHTML = (!expenses || expenses.length === 0)
+      ? '<p class="empty-note">None yet.</p>'
+      : expenses.map(e => `<div class="entry-row"><div class="meta"><span>${e.profiles?e.profiles.email:'?'} · ${fmtDate(e.created_at)} · ${e.category||''}</span><span>$${parseFloat(e.amount).toFixed(2)}</span></div><div class="body">${escapeHtml(e.description||'')}</div></div>`).join('');
+
+    document.getElementById('admin-tasks-list').innerHTML = (!tasks || tasks.length === 0)
+      ? '<p class="empty-note">None yet.</p>'
+      : tasks.map(t => `<div class="entry-row"><div class="meta"><span>${t.profiles?t.profiles.email:'?'} · ${fmtDate(t.created_at)}</span><span class="status-pill ${t.status==='done'?'done':''}">${t.status==='done'?'Done':'In Progress'}</span></div><div class="body">${escapeHtml(t.description)}</div></div>`).join('');
+
+    document.getElementById('admin-notebook-list').innerHTML = (!notes || notes.length === 0)
+      ? '<p class="empty-note">None yet.</p>'
+      : notes.map(n => `<div class="entry-row"><div class="meta"><span>${n.profiles?n.profiles.email:'?'} · ${fmtDate(n.created_at)}</span></div><div class="body">${escapeHtml(n.content)}</div></div>`).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
 </script>
 
 </body>
