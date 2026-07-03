@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Internal Wiki — Genoma Institute</title>
+<title>Internal Wiki | Genoma Institute</title>
 <link rel="icon" type="image/png" href="images/Genoma-Logo.png">
 <link rel="apple-touch-icon" href="images/Genoma-Logo.png">
-<meta property="og:title" content="Internal Wiki — Genoma Institute">
+<meta property="og:title" content="Internal Wiki | Genoma Institute">
 <meta property="og:description" content="Internal wiki and documentation for the Genoma Institute team.">
 <meta property="og:image" content="https://genomainstitute.org/images/Genoma-Logo.png">
 <meta property="og:url" content="https://genomainstitute.org/wiki.html">
@@ -258,7 +258,7 @@
     <div class="breadcrumb"><a href="index.html">Home</a> / Internal Wiki</div>
     <span class="eyebrow">Private Team Page</span>
     <h1>Genoma Institute Wiki</h1>
-    <p>Notes, how-tos, and context for onboarding new interns and collaborators. This page isn't linked anywhere on the public site — keep the URL to people who need it, and keep anything truly sensitive (passwords, API keys) out of here entirely.</p>
+    <p>Notes, how-tos, and context for onboarding new interns and collaborators. This page isn't linked anywhere on the public site. Keep the URL to people who need it, and keep anything truly sensitive (passwords, API keys) out of here entirely.</p>
   </div>
 </section>
 
@@ -284,15 +284,15 @@
     <p>What a new intern or collaborator needs before their first day:</p>
     <h3>Accounts to request</h3>
     <ul>
-      <li><strong>GitHub</strong> — access to <code>lisaeshunwilson/genoma</code> (repo owner adds you under Settings → Collaborators)</li>
-      <li><strong>Google Workspace email</strong> — @genomainstitute.org address <span class="todo-tag">TODO: add once Workspace is live</span></li>
-      <li><strong>Vercel</strong> — if working on the BaseRead app specifically</li>
+      <li><strong>GitHub</strong>: access to <code>lisaeshunwilson/genoma</code> (repo owner adds you under Settings → Collaborators)</li>
+      <li><strong>Google Workspace email</strong>: @genomainstitute.org address <span class="todo-tag">TODO: add once Workspace is live</span></li>
+      <li><strong>Vercel</strong>: if working on the BaseRead app specifically</li>
     </ul>
     <h3>Tools to install</h3>
     <ul>
       <li>Git (comes with Xcode Command Line Tools on Mac, or via <code>brew install git</code>)</li>
       <li>A code editor (VS Code is a solid default)</li>
-      <li><a href="https://claude.ai/download" style="color:var(--accent);">Claude Code</a> — optional, but useful for making site changes via plain-English instructions in the terminal</li>
+      <li><a href="https://claude.ai/download" style="color:var(--accent);">Claude Code</a>: optional, but useful for making site changes via plain-English instructions in the terminal</li>
     </ul>
   </div>
 </section>
@@ -301,12 +301,12 @@
   <div class="wrap">
     <h2>Where Things Live</h2>
     <ul>
-      <li><strong>Public site code</strong> — GitHub repo: <code>github.com/lisaeshunwilson/genoma</code>, deployed automatically via GitHub Pages whenever <code>main</code> is pushed to</li>
-      <li><strong>Live site</strong> — genomainstitute.org (DNS managed in GoDaddy, pointed at GitHub Pages)</li>
-      <li><strong>BaseRead app</strong> — separate codebase, deployed on Vercel <span class="todo-tag">TODO: add repo link</span></li>
-      <li><strong>Logos &amp; brand assets</strong> — <code>images/</code> folder in the main repo</li>
-      <li><strong>Pitch decks &amp; source docs</strong> — <code>pdfs/</code> folder in the main repo</li>
-      <li><strong>Shared files (docs, spreadsheets)</strong> — Google Drive, once Workspace is set up <span class="todo-tag">TODO</span></li>
+      <li><strong>Public site code</strong>: GitHub repo: <code>github.com/lisaeshunwilson/genoma</code>, deployed automatically via GitHub Pages whenever <code>main</code> is pushed to</li>
+      <li><strong>Live site</strong>: genomainstitute.org (DNS managed in GoDaddy, pointed at GitHub Pages)</li>
+      <li><strong>BaseRead app</strong>: separate codebase, deployed on Vercel <span class="todo-tag">TODO: add repo link</span></li>
+      <li><strong>Logos &amp; brand assets</strong>: <code>images/</code> folder in the main repo</li>
+      <li><strong>Pitch decks &amp; source docs</strong>: <code>pdfs/</code> folder in the main repo</li>
+      <li><strong>Shared files (docs, spreadsheets)</strong>: Google Drive, once Workspace is set up <span class="todo-tag">TODO</span></li>
     </ul>
   </div>
 </section>
@@ -314,10 +314,10 @@
 <section class="wiki-section" id="git-basics">
   <div class="wrap">
     <h2>Git Basics for This Team</h2>
-    <p>A few real habits that came out of actually hitting these issues while building this site — worth reading once, saves a headache later.</p>
+    <p>A few real habits that came out of actually hitting these issues while building this site, worth reading once, saves a headache later.</p>
 
     <h3>The one habit that prevents 90% of problems</h3>
-    <div class="callout"><strong>Always <code>git pull</code> right before you start editing</strong> — not just before you push. Most sync errors happen because someone's local copy drifted out of date before they even opened a file.</div>
+    <div class="callout"><strong>Always <code>git pull</code> right before you start editing</strong>, not just before you push. Most sync errors happen because someone's local copy drifted out of date before they even opened a file.</div>
 
     <h3>The standard workflow</h3>
     <pre class="code-block">cd path/to/genoma
@@ -330,7 +330,7 @@ git push origin main</pre>
     <h3>If <code>git push</code> gets rejected</h3>
     <p>You'll see something like <code>Updates were rejected because the remote contains work that you do not have locally</code>. This means someone else pushed changes you don't have yet. Fix:</p>
     <pre class="code-block">git pull origin main</pre>
-    <p>If it merges cleanly, it may open a commit message editor — save and close it, then <code>git push</code> again. If it says <code>CONFLICT</code>, don't panic — nothing is lost. It just means two people edited the same lines of the same file, and git wants a human to pick which version wins. Ask in the team channel and work through it together.</p>
+    <p>If it merges cleanly, it may open a commit message editor, save and close it, then <code>git push</code> again. If it says <code>CONFLICT</code>, don't panic. Nothing is lost. It just means two people edited the same lines of the same file, and git wants a human to pick which version wins. Ask in the team channel and work through it together.</p>
 
     <h3>Commit messages need quotes</h3>
     <p>Always wrap your commit message in straight double quotes, typed directly (not pasted from a doc, which can substitute "smart quotes" that break the command):</p>
@@ -343,15 +343,15 @@ git push origin main</pre>
   <div class="wrap">
     <h2>Project Overview</h2>
     <h3>The mission</h3>
-    <p>Genoma Institute is a nonprofit dedicated to curing genetic disease — building the benchmarks, research, and public understanding gene editing needs to reach the people waiting on it.</p>
+    <p>Genoma Institute is a nonprofit dedicated to curing genetic disease, building the benchmarks, research, and public understanding gene editing needs to reach the people waiting on it.</p>
     <h3>Three pillars</h3>
     <ul>
-      <li><strong>CALI Competition</strong> — Critical Assessment of Large Cargo Insertion. A biennial, blind, unbiased benchmark competition for gene editing tools.</li>
-      <li><strong>Research Lab</strong> — mitochondrial gene therapy research.</li>
-      <li><strong>State of the Genome</strong> — newsletter, podcast, and forum for public science communication.</li>
+      <li><strong>CALI Competition</strong>: Critical Assessment of Large Cargo Insertion. A biennial, blind, unbiased benchmark competition for gene editing tools.</li>
+      <li><strong>Research Lab</strong>: mitochondrial gene therapy research.</li>
+      <li><strong>State of the Genome</strong>: newsletter, podcast, and forum for public science communication.</li>
     </ul>
     <h3>BaseRead</h3>
-    <p>Gene annotation tool — guided variant detection and gene-level annotation built on curated clinical databases (ClinVar, gnomAD). Flow: Input → Annotate → Interpret.</p>
+    <p>Gene annotation tool: guided variant detection and gene-level annotation built on curated clinical databases (ClinVar, gnomAD). Flow: Input → Annotate → Interpret.</p>
   </div>
 </section>
 
@@ -360,7 +360,7 @@ git push origin main</pre>
     <h2>Common Issues &amp; Fixes</h2>
 
     <h3>"Untracked working tree files would be overwritten by merge"</h3>
-    <p>Happens when a folder has files git doesn't know about yet, and a pull would conflict with them. Fix — commit first, then pull:</p>
+    <p>Happens when a folder has files git doesn't know about yet, and a pull would conflict with them. The fix is to commit first, then pull:</p>
     <pre class="code-block">git add -A
 git commit -m "Local files before syncing"
 git pull origin main --allow-unrelated-histories</pre>
@@ -371,7 +371,7 @@ git pull origin main --allow-unrelated-histories</pre>
 git remote set-url origin https://github.com/lisaeshunwilson/genoma.git</pre>
 
     <h3>DNS / domain not resolving</h3>
-    <p>If genomainstitute.org shows a GitHub Pages error about DNS, check GoDaddy for a leftover default A or CNAME record on <code>@</code> or <code>www</code> that's fighting with the GitHub Pages records. Edit the existing record rather than adding a duplicate — DNS only allows one record per name for most types.</p>
+    <p>If genomainstitute.org shows a GitHub Pages error about DNS, check GoDaddy for a leftover default A or CNAME record on <code>@</code> or <code>www</code> that's fighting with the GitHub Pages records. Edit the existing record rather than adding a duplicate. DNS only allows one record per name for most types.</p>
   </div>
 </section>
 
@@ -379,9 +379,9 @@ git remote set-url origin https://github.com/lisaeshunwilson/genoma.git</pre>
   <div class="wrap">
     <h2>Who to Ask</h2>
     <ul>
-      <li><strong>Site / repo access, DNS, domain</strong> — Lisa</li>
-      <li><strong>BaseRead app</strong> — Morgan</li>
-      <li><strong>Everything else</strong> — <span class="todo-tag">fill in as the team grows</span></li>
+      <li><strong>Site / repo access, DNS, domain</strong>: Lisa</li>
+      <li><strong>BaseRead app</strong>: Morgan</li>
+      <li><strong>Everything else</strong>: <span class="todo-tag">fill in as the team grows</span></li>
     </ul>
   </div>
 </section>
