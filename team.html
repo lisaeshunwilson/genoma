@@ -193,6 +193,19 @@
   .tl-row h4{font-size:1.02rem;margin:4px 0 4px;font-weight:600;}
   .tl-row p{color:var(--text-muted);font-size:0.92rem;}
 
+  /* TEAM ACCORDION (native details/summary) + SOCIAL CHIPS */
+  details.person{margin-bottom:40px;}
+  details.person > summary{list-style:none;cursor:pointer;position:relative;margin-bottom:0;transition:border-color 0.2s;}
+  details.person > summary::-webkit-details-marker{display:none;}
+  details.person > summary::marker{content:"";}
+  details.person > summary::after{content:"\25BE";font-family:'IBM Plex Mono',monospace;font-size:0.9rem;color:var(--accent);position:absolute;top:20px;right:24px;transition:transform 0.25s ease;}
+  details.person[open] > summary::after{transform:rotate(180deg);}
+  details.person > summary:hover{border-color:var(--accent);}
+  .person-body{margin-top:24px;}
+  .social-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 14px;}
+  .social-chip{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text-muted);border:1px solid var(--border);border-radius:20px;padding:6px 14px;transition:color 0.2s,border-color 0.2s,background 0.2s;}
+  .social-chip:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);}
+
   .join-note{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:30px 32px;margin-top:8px;}
   .join-note h3{font-size:1.08rem;margin-bottom:8px;}
   .join-note p{color:var(--text-muted);font-size:0.95rem;}
@@ -239,63 +252,104 @@
     <div class="breadcrumb"><a href="index.html">Home</a> / Team</div>
     <span class="eyebrow">Our Team</span>
     <h1>The people framing the problem.</h1>
-    <p>Genoma Institute is early. Right now, that means one founder with the conviction to build the benchmark gene editing is missing, and a growing list of people who believe it matters.</p>
+    <p>Genoma Institute is a reflection of the growing list of people who believe this problem matters.</p>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <div class="team-card reveal">
-      <img src="images/dr-lisa-eshun-wilson.jpg" alt="Dr. Lisa Eshun-Wilson" class="avatar-photo">
-      <div>
-        <h3>Dr. Lisa Eshun-Wilson</h3>
-        <span class="team-role">Founder &amp; Executive Director</span>
-        <p>A researcher-turned-founder with a decade spent at the intersection of structural biology, gene therapy, and AI-driven protein design, now channeling that path into building the open benchmark gene editing has never had.</p>
+    <details class="person reveal">
+      <summary class="team-card">
+        <img src="images/dr-lisa-eshun-wilson.jpg" alt="Dr. Lisa Eshun-Wilson" class="avatar-photo">
+        <div>
+          <h3>Dr. Lisa Eshun-Wilson</h3>
+          <span class="team-role">Founder &amp; Executive Director</span>
+          <div class="social-row">
+            <a href="#" class="social-chip">LinkedIn</a>
+            <a href="#" class="social-chip">X</a>
+            <a href="#" class="social-chip">Instagram</a>
+            <a href="#" class="social-chip">Google Scholar</a>
+            <a href="#" class="social-chip">ORCID</a>
+          </div>
+          <p>A researcher-turned-founder with a decade spent at the intersection of structural biology, gene therapy, and AI-driven protein design, now channeling that path into building the open benchmark gene editing has never had.</p>
+        </div>
+      </summary>
+      <div class="person-body">
+        <div class="section-head" style="margin-bottom:32px;">
+          <span class="eyebrow">The Path Here</span>
+          <h2>Why this problem, why now.</h2>
+        </div>
+        <div class="timeline">
+          <div class="tl-row reveal">
+            <span class="tl-year">2010</span>
+            <h4>Grinnell College, B.A. Biological Chemistry</h4>
+            <p>Where the curiosity for genetic disease began.</p>
+          </div>
+          <div class="tl-row reveal">
+            <span class="tl-year">2014</span>
+            <h4>NIH, Cancer Cell Trafficking</h4>
+            <p>Research with Dr. Julie Donaldson using TIRF microscopy.</p>
+          </div>
+          <div class="tl-row reveal">
+            <span class="tl-year">2015</span>
+            <h4>UC Berkeley, Ph.D. Biophysics &amp; Structural Biology</h4>
+            <p>Microtubule regulation research using cryo-EM.</p>
+          </div>
+          <div class="tl-row reveal">
+            <span class="tl-year">2018</span>
+            <h4>inclusiveBio, Founder</h4>
+            <p>Founded at Berkeley · Raised $100K+ · Built a 300+ person community.</p>
+          </div>
+          <div class="tl-row reveal">
+            <span class="tl-year">2020</span>
+            <h4>Scripps Research, Mitochondrial Regulation</h4>
+            <p>Research with Dr. Gabe Lander using cryo-EM.</p>
+          </div>
+          <div class="tl-row reveal">
+            <span class="tl-year">2024</span>
+            <h4>Profluent Bio, AI-First Protein Design</h4>
+            <p>Programmable DNA recombinases, the exact tools CALI will benchmark.</p>
+          </div>
+          <div class="tl-row reveal">
+            <span class="tl-year">Now</span>
+            <h4>Genoma Institute</h4>
+            <p>All of the above, combined with the conviction to frame the gene editing problem.</p>
+          </div>
+        </div>
       </div>
-    </div>
+    </details>
 
-    <div class="section-head" style="margin-bottom:32px;">
-      <span class="eyebrow">The Path Here</span>
-      <h2>Why this problem, why now.</h2>
-    </div>
-
-    <div class="timeline">
-      <div class="tl-row reveal">
-        <span class="tl-year">2010</span>
-        <h4>Grinnell College, B.A. Biological Chemistry</h4>
-        <p>Where the curiosity for genetic disease began.</p>
+    <details class="person reveal">
+      <summary class="team-card">
+        <div class="avatar">MH</div>
+        <div>
+          <h3>Morgan Isabella Howard</h3>
+          <span class="team-role">Research Associate</span>
+          <div class="social-row">
+            <a href="#" class="social-chip">LinkedIn</a>
+            <a href="#" class="social-chip">X</a>
+            <a href="#" class="social-chip">Instagram</a>
+            <a href="#" class="social-chip">Google Scholar</a>
+            <a href="#" class="social-chip">ORCID</a>
+          </div>
+          <p>Grinnell College, Class of 2027. Passionate about biology, AI, and making science more equitable.</p>
+        </div>
+      </summary>
+      <div class="person-body">
+        <div class="timeline">
+          <div class="tl-row reveal">
+            <span class="tl-year">2023-2027</span>
+            <h4>Grinnell College</h4>
+            <p>Four years building a foundation in biology, with a growing focus on AI and equitable access to science.</p>
+          </div>
+          <div class="tl-row reveal">
+            <span class="tl-year">Now</span>
+            <h4>Grinnell to Genoma Institute</h4>
+            <p>Bringing that foundation to Genoma as a Research Associate.</p>
+          </div>
+        </div>
       </div>
-      <div class="tl-row reveal">
-        <span class="tl-year">2014</span>
-        <h4>NIH, Cancer Cell Trafficking</h4>
-        <p>Research with Dr. Julie Donaldson using TIRF microscopy.</p>
-      </div>
-      <div class="tl-row reveal">
-        <span class="tl-year">2015</span>
-        <h4>UC Berkeley, Ph.D. Biophysics &amp; Structural Biology</h4>
-        <p>Microtubule regulation research using cryo-EM.</p>
-      </div>
-      <div class="tl-row reveal">
-        <span class="tl-year">2018</span>
-        <h4>inclusiveBio, Founder</h4>
-        <p>Founded at Berkeley · Raised $100K+ · Built a 300+ person community.</p>
-      </div>
-      <div class="tl-row reveal">
-        <span class="tl-year">2020</span>
-        <h4>Scripps Research, Mitochondrial Regulation</h4>
-        <p>Research with Dr. Gabe Lander using cryo-EM.</p>
-      </div>
-      <div class="tl-row reveal">
-        <span class="tl-year">2024</span>
-        <h4>Profluent Bio, AI-First Protein Design</h4>
-        <p>Programmable DNA recombinases, the exact tools CALI will benchmark.</p>
-      </div>
-      <div class="tl-row reveal">
-        <span class="tl-year">Now</span>
-        <h4>Genoma Institute</h4>
-        <p>All of the above, combined with the conviction to frame the gene editing problem.</p>
-      </div>
-    </div>
+    </details>
   </div>
 </section>
 
@@ -342,6 +396,18 @@
     entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); } });
   },{threshold:0.15});
   reveals.forEach(el=>io.observe(el));
+
+  // Social chips shouldn't toggle the accordion they live inside
+  document.querySelectorAll('.social-chip').forEach(chip=>{
+    chip.addEventListener('click', e=>{ e.stopPropagation(); });
+  });
+
+  // Reveal timeline rows when a person's accordion is expanded
+  document.querySelectorAll('details.person').forEach(d=>{
+    d.addEventListener('toggle', ()=>{
+      if(d.open){ d.querySelectorAll('.reveal').forEach(el=>el.classList.add('in')); }
+    });
+  });
 
   const menuBtn = document.querySelector('.menu-btn');
   const navlinks = document.querySelector('.navlinks');
