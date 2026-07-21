@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Genoma × Grinnell CLS — Partnership Proposal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#122e21; --bg-deep:#0d2318; --card:#1c4632; --card-line:#2c5a41;
+    --mint:#7ed3ac; --mint-dim:#8fcbaa; --mint-bright:#a8ecc7; --text:#eaf3ee; --text-dim:#bfe3d0;
+    --type-title:64px; --type-subtitle:34px; --type-body:26px; --type-small:24px; --type-eyebrow:24px;
+    --pad-top:100px; --pad-bottom:80px; --pad-x:110px; --gap-title:40px; --gap-item:24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;}
+  body{font-family:'Space Grotesk',sans-serif;-webkit-tap-highlight-color:transparent;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;cursor:pointer;}
+  #canvas{position:relative;width:1920px;height:1080px;flex-shrink:0;transform-origin:center center;
+    background:#0a0a0a;box-shadow:0 0 0 1.5px rgba(255,255,255,0.12);}
+
+  #canvas > section{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;overflow:hidden;
+    opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s ease;}
+  #canvas > section.active{opacity:1;visibility:visible;pointer-events:auto;}
+
+  .slide-bg{
+    position:absolute;inset:0;background:
+      radial-gradient(circle at 82% 12%, rgba(126,211,172,0.14), transparent 45%),
+      linear-gradient(180deg, var(--bg-deep), var(--bg));
+    background-size:cover;
+  }
+  .grid-overlay{
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(126,211,172,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(126,211,172,0.05) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:linear-gradient(180deg, transparent, black 30%, black 80%, transparent);
+  }
+  @keyframes pulse{0%,100%{opacity:0.55}50%{opacity:1}}
+
+  #overlay{
+    position:fixed;left:50%;bottom:22px;transform:translate(-50%,6px) scale(0.92);filter:blur(6px);
+    display:flex;align-items:center;gap:4px;padding:4px;background:#000;color:#fff;border-radius:999px;
+    font-size:12px;font-feature-settings:"tnum" 1;letter-spacing:0.01em;opacity:0;pointer-events:none;
+    transition:opacity 260ms ease, transform 260ms cubic-bezier(.2,.8,.2,1), filter 260ms ease;
+    transform-origin:center bottom;z-index:2147483000;user-select:none;
+  }
+  #overlay.visible{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1);filter:blur(0);}
+  #overlay button{
+    appearance:none;background:transparent;border:0;margin:0;padding:0;color:rgba(255,255,255,0.72);
+    font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+    height:28px;min-width:28px;border-radius:999px;transition:background 140ms ease, color 140ms ease;
+  }
+  #overlay button:hover{background:rgba(255,255,255,0.12);color:#fff;}
+  #overlay button:active{background:rgba(255,255,255,0.18);}
+  #overlay button svg{width:14px;height:14px;display:block;}
+  #overlay .count{font-variant-numeric:tabular-nums;color:#fff;font-weight:500;padding:0 8px;min-width:42px;text-align:center;font-size:12px;}
+  #overlay .count .sep{color:rgba(255,255,255,0.45);margin:0 3px;font-weight:400;}
+  #overlay .divider{width:1px;height:14px;background:rgba(255,255,255,0.18);margin:0 2px;}
+
+  @media print{
+    #overlay{display:none;}
+    #stage{position:static;background:none;}
+    #canvas{transform:none !important;width:auto;height:auto;}
+    #canvas > section{position:relative !important;opacity:1 !important;visibility:visible !important;
+      width:1920px !important;height:1080px !important;break-after:page;}
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="canvas">
+
+    <section data-label="Title" style="position:relative;overflow:hidden;color:var(--text);display:flex;flex-direction:column;justify-content:space-between;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+      <div class="slide-bg"></div>
+      <div class="grid-overlay"></div>
+      <div style="position:absolute;top:80px;right:110px;width:280px;height:280px;opacity:0.9;filter:drop-shadow(0 0 40px rgba(126,211,172,0.35))">
+        <img src="images/Genoma-Logo.png" alt="Genoma logo" style="width:100%;height:100%;object-fit:contain" />
+      </div>
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:22px;max-width:1050px">
+        <span class="mono" style="font-size:var(--type-eyebrow);letter-spacing:0.22em;color:var(--mint);text-transform:uppercase">Partnership Proposal</span>
+        <h1 style="margin:0;font-size:var(--type-title);font-weight:600;line-height:1.05;letter-spacing:-0.01em">Genoma <span style="color:var(--mint)">×</span> Grinnell CLS</h1>
+        <p style="margin:0;font-size:var(--type-subtitle);color:var(--text-dim);font-weight:400;max-width:820px">Building a Bio + AI internship pipeline for Grinnellians</p>
+      </div>
+      <div style="position:relative;z-index:1;display:flex;align-items:flex-end;gap:56px;border-top:1px solid var(--card-line);padding-top:32px">
+        <div style="display:flex;flex-direction:column;gap:6px;white-space:nowrap">
+          <span style="font-size:var(--type-small);color:var(--text)">Dr. Lisa Eshun-Wilson</span>
+          <span class="mono" style="font-size:var(--type-small);color:var(--mint-dim)">Founder, Genoma</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;white-space:nowrap">
+          <span style="font-size:var(--type-small);color:var(--text)">Morgan Howard</span>
+          <span class="mono" style="font-size:var(--type-small);color:var(--mint-dim)">Summer 2026 Research Associate</span>
+        </div>
+      </div>
+    </section>
+
+    <section data-label="Opportunity" style="position:relative;overflow:hidden;color:var(--text);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+      <div class="slide-bg"></div>
+      <div class="grid-overlay"></div>
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:var(--gap-title)">
+        <span class="mono" style="font-size:var(--type-eyebrow);letter-spacing:0.2em;color:var(--mint);text-transform:uppercase">01 / Opportunity</span>
+        <h2 style="margin:0;font-size:52px;font-weight:600;letter-spacing:-0.01em">The opportunity for Grinnell students</h2>
+      </div>
+      <div style="position:relative;z-index:1;flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:28px;margin-top:56px">
+        <div style="background:var(--card);border:1px solid var(--card-line);border-radius:4px;padding:32px;display:flex;flex-direction:column;gap:12px;position:relative">
+          <span class="mono" style="position:absolute;top:20px;right:20px;font-size:var(--type-small);color:var(--card-line)">A1</span>
+          <p class="mono" style="margin:0 44px 0 0;font-size:var(--type-small);color:var(--mint-dim);text-transform:uppercase;letter-spacing:0.1em">Proof of concept</p>
+          <p style="margin:0;font-size:var(--type-body);line-height:1.4">Morgan Howard ('27) built BaseRead, a working gene-annotation tool, as a summer research associate.</p>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--card-line);border-radius:4px;padding:32px;display:flex;flex-direction:column;gap:12px;position:relative">
+          <span class="mono" style="position:absolute;top:20px;right:20px;font-size:var(--type-small);color:var(--card-line)">A2</span>
+          <p class="mono" style="margin:0 44px 0 0;font-size:var(--type-small);color:var(--mint-dim);text-transform:uppercase;letter-spacing:0.1em">Next projects</p>
+          <p style="margin:0;font-size:var(--type-body);line-height:1.4">RNAread and PeptideRead extend the BaseRead line, open to Bio and CS majors.</p>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--card-line);border-radius:4px;padding:32px;display:flex;flex-direction:column;gap:12px;position:relative">
+          <span class="mono" style="position:absolute;top:20px;right:20px;font-size:var(--type-small);color:var(--card-line)">A3</span>
+          <p class="mono" style="margin:0 44px 0 0;font-size:var(--type-small);color:var(--mint-dim);text-transform:uppercase;letter-spacing:0.1em">Who it's for</p>
+          <p style="margin:0;font-size:var(--type-body);line-height:1.4">2nd and 3rd-year STEM students, with intentional outreach to underrepresented groups in STEM.</p>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--card-line);border-radius:4px;padding:32px;display:flex;flex-direction:column;gap:12px;position:relative">
+          <span class="mono" style="position:absolute;top:20px;right:20px;font-size:var(--type-small);color:var(--card-line)">A4</span>
+          <p class="mono" style="margin:0 44px 0 0;font-size:var(--type-small);color:var(--mint-dim);text-transform:uppercase;letter-spacing:0.1em">Real infrastructure</p>
+          <p style="margin:0;font-size:var(--type-body);line-height:1.4">Paid, structured internships with time tracking, mentorship, and a defined deliverable.</p>
+        </div>
+      </div>
+    </section>
+
+    <section data-label="The Ask" style="position:relative;overflow:hidden;color:var(--text);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+      <div class="slide-bg"></div>
+      <div class="grid-overlay"></div>
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:var(--gap-title)">
+        <span class="mono" style="font-size:var(--type-eyebrow);letter-spacing:0.2em;color:var(--mint);text-transform:uppercase">02 / The Ask</span>
+        <h2 style="margin:0;font-size:52px;font-weight:600;letter-spacing:-0.01em">Fund two fully-supported internships</h2>
+      </div>
+      <div style="position:relative;z-index:1;flex:1;display:grid;grid-template-columns:0.6fr 1.4fr;gap:64px;margin-top:56px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:20px;padding-top:8px">
+          <span class="mono" style="font-size:120px;font-weight:600;color:var(--mint);line-height:1;letter-spacing:-0.02em">$10K</span>
+          <p style="margin:0;font-size:var(--type-body);color:var(--text-dim);max-width:420px;line-height:1.4">Target stipend per student, covering Bay Area summer costs for two positions.</p>
+        </div>
+        <table class="mono" style="width:100%;font-size:24px;border-collapse:collapse;align-self:center;table-layout:fixed">
+          <tr style="color:var(--mint-dim)"><td style="padding:6px 0;width:80%">Item</td><td style="text-align:right;padding:6px 0;width:20%;white-space:nowrap">Est. cost</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Housing, 6-wk studio (BSC)</td><td style="text-align:right">$1,700</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Flights</td><td style="text-align:right">$1,000</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Living / food stipend</td><td style="text-align:right">$1,800</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Laptop</td><td style="text-align:right">$2,000</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Claude credits</td><td style="text-align:right">$500</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Workspace (WeWork)</td><td style="text-align:right">$200</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Transportation (Uber + BART)</td><td style="text-align:right">$500</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0;white-space:nowrap">Melanin in Science — 6-wk Bay Area networking program</td><td style="text-align:right">$150</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">UCSF — 6-wk Bay Area networking program</td><td style="text-align:right">$150</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Excursions & organized events (Cal Academy, SFMOMA, de Young, Ballet, Opera House)</td><td style="text-align:right">$1,000</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Contingency / emergencies</td><td style="text-align:right">$500</td></tr>
+          <tr style="border-top:1px solid var(--card-line)"><td style="padding:8px 0">Genoma × Grinnell swag (jacket + backpack)</td><td style="text-align:right">$500</td></tr>
+          <tr style="border-top:2px solid var(--mint);color:var(--mint-bright);font-weight:600"><td style="padding:10px 0">Total per student</td><td style="text-align:right;padding:10px 0">$10,000</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section data-label="Partnership" style="position:relative;overflow:hidden;color:var(--text);display:flex;flex-direction:column;padding:var(--pad-top) var(--pad-x) var(--pad-bottom)">
+      <div class="slide-bg"></div>
+      <div class="grid-overlay"></div>
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:var(--gap-title)">
+        <span class="mono" style="font-size:var(--type-eyebrow);letter-spacing:0.2em;color:var(--mint);text-transform:uppercase">03 / Partnership</span>
+        <h2 style="margin:0;font-size:52px;font-weight:600;letter-spacing:-0.01em">How CLS can partner with us</h2>
+      </div>
+      <div style="position:relative;z-index:1;flex:1;display:flex;flex-direction:column;gap:var(--gap-item);margin-top:48px;justify-content:center">
+        <div style="display:flex;align-items:baseline;gap:28px;border-bottom:1px solid var(--card-line);padding-bottom:22px">
+          <span class="mono" style="font-size:var(--type-subtitle);color:var(--mint);min-width:56px">01</span>
+          <p style="margin:0;font-size:var(--type-body);line-height:1.5"><span style="color:var(--mint-dim)">CLS general funds —</span> anchor stipend support for both positions</p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:28px;border-bottom:1px solid var(--card-line);padding-bottom:22px">
+          <span class="mono" style="font-size:var(--type-subtitle);color:var(--mint);min-width:56px">02</span>
+          <p style="margin:0;font-size:var(--type-body);line-height:1.5"><span style="color:var(--mint-dim)">DEI office co-funding —</span> targeted support for one position, connecting to Melanin in Science and Cal Academy's STEMM identities exhibit</p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:28px;border-bottom:1px solid var(--card-line);padding-bottom:22px">
+          <span class="mono" style="font-size:var(--type-subtitle);color:var(--mint);min-width:56px">03</span>
+          <p style="margin:0;font-size:var(--type-body);line-height:1.5"><span style="color:var(--mint-dim)">Rainbow / LGBTQ Center co-funding —</span> targeted support for the other position, connecting to Berkeley oSTEM</p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:28px">
+          <span class="mono" style="font-size:var(--type-subtitle);color:var(--mint);min-width:56px">04</span>
+          <p style="margin:0;font-size:var(--type-body);line-height:1.5"><span style="color:var(--mint-dim)">Ongoing partnership —</span> Genoma as a standing employer for future CLS-sponsored summers</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div id="overlay" role="toolbar" aria-label="Deck controls">
+  <button id="prevBtn" type="button" aria-label="Previous slide" title="Previous (←)">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>
+  </button>
+  <span class="count" aria-live="polite"><span id="cur">1</span><span class="sep">/</span><span id="tot">1</span></span>
+  <button id="nextBtn" type="button" aria-label="Next slide" title="Next (→)">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>
+  </button>
+</div>
+
+<script>
+(function () {
+  var DESIGN_W = 1920, DESIGN_H = 1080;
+  var canvas = document.getElementById('canvas');
+  var slides = Array.prototype.slice.call(canvas.querySelectorAll('section'));
+  var stage = document.getElementById('stage');
+  var overlay = document.getElementById('overlay');
+  var curEl = document.getElementById('cur');
+  var totEl = document.getElementById('tot');
+  var index = 0;
+
+  totEl.textContent = slides.length;
+
+  function fit() {
+    var scale = Math.min(window.innerWidth / DESIGN_W, window.innerHeight / DESIGN_H);
+    canvas.style.transform = 'scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  function render() {
+    slides.forEach(function (s, n) {
+      s.classList.toggle('active', n === index);
+    });
+    curEl.textContent = index + 1;
+  }
+
+  function go(i) {
+    index = (i + slides.length) % slides.length;
+    render();
+  }
+
+  var hideTimer = null;
+  function flashOverlay() {
+    overlay.classList.add('visible');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function () {
+      overlay.classList.remove('visible');
+    }, 1800);
+  }
+
+  function advance(delta) {
+    go(index + delta);
+    flashOverlay();
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+      advance(1); e.preventDefault();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+      advance(-1); e.preventDefault();
+    } else if (e.key === 'Home') {
+      go(0); flashOverlay();
+    } else if (e.key === 'End') {
+      go(slides.length - 1); flashOverlay();
+    }
+  });
+
+  stage.addEventListener('click', function (e) {
+    var interactive = e.target.closest('a[href], button, input, select, textarea, [role="button"]');
+    if (interactive) return;
+    var half = window.innerWidth / 2;
+    advance(e.clientX < half ? -1 : 1);
+  });
+
+  document.getElementById('prevBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    advance(-1);
+  });
+  document.getElementById('nextBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    advance(1);
+  });
+
+  document.addEventListener('mousemove', flashOverlay);
+  overlay.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
+  overlay.addEventListener('mouseleave', flashOverlay);
+
+  render();
+  flashOverlay();
+})();
+</script>
+
+</body>
+</html>
