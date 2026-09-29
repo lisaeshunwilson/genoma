@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genoma Institute | Pitch Deck</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="images/Genoma-Logo.png">
+<link rel="apple-touch-icon" href="images/Genoma-Logo.png">
+<meta property="og:title" content="Genoma Institute — Pitch Deck">
+<meta property="og:description" content="Framing the gene editing problem. Accelerating cures. A nonprofit dedicated to curing genetic disease.">
+<meta property="og:image" content="https://www.genomainstitute.org/images/pitch-og.png">
+<meta property="og:url" content="https://www.genomainstitute.org/pitch">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#10140F;
+    --surface:#171D18;
+    --border:#2A332B;
+    --text:#F1F5F2;
+    --text-muted:#98A69B;
+    --accent:#86C2A4;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    flex-direction:column;
+  }
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+    flex-shrink:0;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand img{height:28px;width:28px;display:block;}
+  .brand-text{display:flex;flex-direction:column;line-height:1.15;}
+  .brand-name{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:0.95rem;}
+  .brand-sub{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;}
+  .dl-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:0.78rem;letter-spacing:0.02em;
+    color:var(--bg);background:var(--accent);
+    padding:9px 16px;border-radius:6px;
+    white-space:nowrap;
+  }
+  .dl-btn:hover{opacity:0.88;}
+
+  main{flex:1;min-height:0;display:flex;}
+  .viewer{flex:1;border:none;background:var(--bg);}
+
+  .mobile-fallback{
+    display:none;
+    flex:1;
+    flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:48px 24px;gap:18px;
+  }
+  .mobile-fallback p{color:var(--text-muted);max-width:340px;line-height:1.5;font-size:0.95rem;}
+  .mobile-fallback a.open-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:0.9rem;
+    color:var(--bg);background:var(--accent);
+    padding:14px 28px;border-radius:8px;
+  }
+
+  @media (max-width:760px){
+    .viewer{display:none;}
+    .mobile-fallback{display:flex;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <img src="images/Genoma-Logo.png" alt="Genoma">
+    <div class="brand-text">
+      <span class="brand-name">Genoma Institute</span>
+      <span class="brand-sub">Pitch Deck</span>
+    </div>
+  </div>
+  <a class="dl-btn" href="pitch.pdf" download>Download PDF</a>
+</header>
+<main>
+  <iframe class="viewer" src="pitch.pdf#view=FitH" title="Genoma Institute Pitch Deck"></iframe>
+  <div class="mobile-fallback">
+    <p>For the best viewing experience on mobile, open the deck directly.</p>
+    <a class="open-btn" href="pitch.pdf">Open Pitch Deck</a>
+  </div>
+</main>
+</body>
+</html>
