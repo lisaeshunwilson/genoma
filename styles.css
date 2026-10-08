@@ -131,8 +131,11 @@
   .footer-links a{color:var(--text-muted);font-size:0.85rem;}
   .footer-links a:hover{color:var(--text);}
   .footer-copy{font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--text-muted);}
+  .footer-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;}
+  .footer-address{font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--text-muted);}
 
   @media (max-width: 860px){
+    .footer-meta{align-items:flex-start;text-align:left;}
     .navlinks{display:none;}
     .navlinks.is-open{
       display:flex;
