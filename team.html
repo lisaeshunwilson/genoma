@@ -43,6 +43,12 @@
   .social-chip{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;color:var(--text-muted);border:1px solid var(--border);border-radius:50%;transition:border-color 0.2s,color 0.2s;}
   .social-chip:hover{border-color:var(--accent);color:var(--accent);}
   .social-chip svg{width:16px;height:16px;fill:currentColor;}
+
+  .fellowship-list{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 0;}
+  .fellowship-list li{display:flex;align-items:center;gap:8px;font-size:0.92rem;border:1px solid var(--border);border-radius:20px;padding:7px 14px 7px 16px;}
+  .role-status{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.02em;border-radius:20px;padding:4px 10px;display:inline-block;}
+  .role-status.status-open{color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);}
+  .role-status.status-future{color:var(--text-muted);background:transparent;border:1px solid var(--border);}
 </style>
 </head>
 <body>
@@ -190,6 +196,23 @@
       <p>Genoma is looking for people who want to build the benchmark gene editing has never had: researchers, engineers, and communicators alike. Reach out if that's you.</p>
       <div style="margin-top:18px;">
         <a href="index.html#contact" class="btn btn-primary">Get in Touch →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap">
+    <div class="join-note reveal">
+      <h3>Join us: Undergraduate Fellowships</h3>
+      <p>We're recruiting undergraduate fellows to build the Read suite, open-source tools that make complex biological data easy to understand.</p>
+      <ul class="fellowship-list">
+        <li>BaseRead Fellow <span class="role-status status-open">Summer 2027</span></li>
+        <li>EnsembleRead Fellow <span class="role-status status-open">Summer 2027</span></li>
+        <li>RNARead Fellow <span class="role-status status-future">Summer 2028</span></li>
+      </ul>
+      <div style="margin-top:18px;">
+        <a href="hiring.html#roles" class="btn btn-primary">See Fellowships →</a>
       </div>
     </div>
   </div>

@@ -23,8 +23,19 @@
   .why-item h3{font-size:1rem;margin-bottom:6px;font-weight:600;}
   .why-item p{color:var(--text-muted);font-size:0.9rem;}
   @media (max-width:860px){.why-grid{grid-template-columns:1fr;}}
-  #roles .pillar-grid{grid-template-columns:repeat(2,1fr);max-width:720px;margin:0 auto;}
-  @media (max-width:860px){#roles .pillar-grid{grid-template-columns:1fr;}}
+
+  .work-with-line{font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--text-muted);margin-top:18px;}
+  .work-with-line a{color:var(--accent);}
+
+  .pillar-card p{margin-top:10px;}
+  .role-status{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.02em;border-radius:20px;padding:5px 12px;display:inline-block;margin-bottom:14px;}
+  .role-status.status-open{color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);}
+  .role-status.status-future{color:var(--text-muted);background:transparent;border:1px solid var(--border);}
+  .role-looking{color:var(--text-muted);font-size:0.88rem;margin-top:14px;}
+  .role-looking strong{color:var(--text);}
+  .pillar-card a{color:var(--accent);}
+  .card-apply-link{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--accent);margin-top:16px;}
+  .card-apply-link:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -60,6 +71,7 @@
       <a href="#roles" class="btn btn-primary">See Open Roles →</a>
       <a href="#apply" class="btn btn-secondary">How to Apply</a>
     </div>
+    <p class="work-with-line">Who you'll work with: <a href="team.html">meet our team</a></p>
   </div>
 </section>
 
@@ -91,21 +103,33 @@
   <div class="wrap">
     <div class="section-head">
       <span class="eyebrow">Open Roles</span>
-      <h2>Where you could fit in.</h2>
-      <p>Rolling applications. We review as they come in rather than on a fixed cycle.</p>
+      <h2>Undergraduate Fellowships: The Read Suite</h2>
+      <p>The Read suite is a family of open-source tools that turn complex biological data into clear, plain-language insight. Each tool is built by an undergraduate fellow working directly with our founder, Dr. Lisa Eshun-Wilson.</p>
     </div>
     <div class="pillar-grid">
       <div class="pillar-card reveal">
         <span class="pillar-num">01</span>
-        <h3>BaseRead Intern</h3>
-        <span class="pillar-sub">BaseRead</span>
-        <p>Help build out BaseRead's variant annotation tooling.</p>
+        <span class="role-status status-open">Now recruiting &middot; Summer 2027</span>
+        <h3>BaseRead Fellow</h3>
+        <p>BaseRead (<a href="https://baseread.vercel.app" target="_blank" rel="noopener">baseread.vercel.app</a>) turns genetic variant files into plain-language reports by cross-referencing ClinVar, gnomAD, dbSNP, and OMIM. You'll build new features, test the tool with real-world data from our research and hospital partners, and contribute to a preprint and conference presentations.</p>
+        <p class="role-looking"><strong>Looking for:</strong> programming experience (Python or JavaScript), interest in genetics or bioinformatics.</p>
+        <a href="#apply" class="card-apply-link">Apply →</a>
       </div>
       <div class="pillar-card reveal">
         <span class="pillar-num">02</span>
-        <h3>PeptideRead Intern</h3>
-        <span class="pillar-sub">PeptideRead</span>
-        <p>Extend the BaseRead line into peptide annotation, open to Bio and CS majors.</p>
+        <span class="role-status status-open">Now recruiting &middot; Summer 2027</span>
+        <h3>EnsembleRead Fellow</h3>
+        <p>Proteins are not frozen shapes. They move between many conformations, and those motions often explain how they work. EnsembleRead will compare structural models, such as AlphaFold predictions, against experimental cryo-EM data to show which conformations fit, and turn that conformational landscape into a clear readout anyone can interpret. You'll help build the tool, explore what different ensembles mean biologically, and contribute to a preprint and presentations.</p>
+        <p class="role-looking"><strong>Looking for:</strong> programming experience (Python), interest in structural biology, biochemistry, or biophysics.</p>
+        <a href="#apply" class="card-apply-link">Apply →</a>
+      </div>
+      <div class="pillar-card reveal">
+        <span class="pillar-num">03</span>
+        <span class="role-status status-future">Future role &middot; Summer 2028 &middot; Early interest welcome</span>
+        <h3>RNARead Fellow</h3>
+        <p>RNARead will bring the same plain-language approach to RNA data, helping researchers and clinicians interpret RNA sequencing results. This role is part of our roadmap. If you're excited to help shape it earlier, we'd love to talk.</p>
+        <p class="role-looking"><strong>Looking for:</strong> programming experience (Python or R), interest in molecular biology or genomics.</p>
+        <a href="#apply" class="card-apply-link">Apply →</a>
       </div>
     </div>
   </div>
@@ -115,10 +139,10 @@
   <div class="wrap contact-inner">
     <div>
       <span class="eyebrow">How to Apply</span>
-      <h2>Send us a note and a resume.</h2>
-      <p>No formal application portal yet. Email your resume and 2-3 sentences on which role interests you and why. We read every one.</p>
+      <h2>Send us your resume and cover letter.</h2>
+      <p>Email your resume and a cover letter to careers@genomainstitute.org. In your cover letter, tell us which role you're applying for and why you'd be a great fit. Please put the role name in the subject line, for example "BaseRead Fellow Application." Grinnell students can also apply through Handshake. We read every application.</p>
     </div>
-    <a href="mailto:careers@genomainstitute.org?subject=Internship%20Application" class="btn btn-primary">Apply via Email →</a>
+    <a href="mailto:careers@genomainstitute.org?subject=Fellowship%20Application" class="btn btn-primary">Apply via Email →</a>
   </div>
 </section>
 
