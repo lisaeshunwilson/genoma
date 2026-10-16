@@ -34,6 +34,8 @@ const BUDGET = {
   updated: "2026-10-08",
   donateUrl: "https://www.paypal.com/ncp/payment/EB4X4J8JZVM9J",
   contactEmail: "lisa@genomainstitute.org",
+  sponsorEmail: "sponsor@genomainstitute.org",
+  donateEmail: "donate@genomainstitute.org",
   sections: [
     { id: "competition", eyebrow: "Part 1", title: "CALI competition costs",
       blurb: "Everything that goes directly into running the competition, from the assays that verify every submission to the judges, teams, and symposium." },
@@ -272,7 +274,7 @@ const BUDGET = {
       <span class="brand-sub">Living Budget</span>
     </div>
   </a>
-  <div class="header-cta"><a class="btn" id="header-donate" href="mailto:lisa@genomainstitute.org?subject=Donating%20to%20Genoma%20Institute">Sponsor</a></div>
+  <div class="header-cta"><a class="btn" id="header-donate" href="mailto:donate@genomainstitute.org?subject=Donating%20to%20Genoma%20Institute">Sponsor</a></div>
 </header>
 
 <main>
@@ -294,7 +296,7 @@ const BUDGET = {
       <div class="split" id="s-split"></div>
       <div class="summary-cta">
         <p>Give any amount toward the whole budget, or pick a line item below and sponsor it directly.</p>
-        <a class="btn lg" id="main-donate" href="mailto:lisa@genomainstitute.org?subject=Donating%20to%20Genoma%20Institute">Donate now</a>
+        <a class="btn lg" id="main-donate" href="mailto:donate@genomainstitute.org?subject=Donating%20to%20Genoma%20Institute">Donate now</a>
         <a class="btn lg ghost" href="#items">Sponsor a line item</a>
       </div>
     </div>
@@ -319,12 +321,12 @@ const BUDGET = {
       <div class="tier"><div class="name">Program Partner</div><div class="amt">$100K to $500K</div><p>Fund a full program area such as lab operations, personnel, or the symposium.</p></div>
       <div class="tier"><div class="name">Community Partner</div><div class="amt">Up to $100K</div><p>Sponsor a specific line item, from sequencing runs to participant mini-grants.</p></div>
     </div>
-    <div style="margin-top:20px"><a class="btn ghost" id="partner-email" href="mailto:lisa@genomainstitute.org?subject=Partnering%20with%20Genoma%20Institute">Talk to us about partnering</a></div>
+    <div style="margin-top:20px"><a class="btn ghost" id="partner-email" href="mailto:sponsor@genomainstitute.org?subject=Partnering%20with%20Genoma%20Institute">Talk to us about partnering</a></div>
   </section>
 
   <div class="fine">
     <p>Genoma Institute is a California nonprofit public benefit corporation. Our federal 501(c)(3) recognition is pending, so please reach out before giving if the tax treatment of your gift matters to you.</p>
-    <p>Figures are estimates for year one and may shift as plans firm up. Questions? Email us at <a id="fine-email" href="mailto:lisa@genomainstitute.org?subject=Question%20about%20the%20Genoma%20budget">lisa@genomainstitute.org</a>.</p>
+    <p>Figures are estimates for year one and may shift as plans firm up. Questions? Email us at <a id="fine-email" href="mailto:info@genomainstitute.org?subject=Question%20about%20the%20Genoma%20budget">info@genomainstitute.org</a>.</p>
   </div>
 </main>
 
@@ -341,13 +343,13 @@ const BUDGET = {
   const fmt = n => "$" + Math.round(n).toLocaleString("en-US");
   const short = n => n >= 1000 ? "$" + (n/1000).toLocaleString("en-US",{maximumFractionDigits:1}) + "K" : fmt(n);
   const pct = (a,b) => b ? Math.min(100, a / b * 100) : 0;
-  const mail = (subject, body) =>
-    "mailto:" + B.contactEmail + "?subject=" + encodeURIComponent(subject) + (body ? "&body=" + encodeURIComponent(body) : "");
+  const mail = (email, subject, body) =>
+    "mailto:" + email + "?subject=" + encodeURIComponent(subject) + (body ? "&body=" + encodeURIComponent(body) : "");
   const isExternal = url => /^https?:/i.test(url);
 
-  const generalLink = B.donateUrl || mail("Donating to Genoma Institute", "Hi Lisa,\n\nI'd like to support Genoma Institute.\n\n");
+  const generalLink = B.donateUrl || mail(B.donateEmail, "Donating to Genoma Institute", "Hi Lisa,\n\nI'd like to support Genoma Institute.\n\n");
   const itemLink = it => it.link || B.donateUrl ||
-    mail("Sponsoring: " + it.name, "Hi Lisa,\n\nI'm interested in sponsoring \"" + it.name + "\" (" + fmt(it.cost - Math.min(it.funded, it.cost)) + " still needed).\n\n");
+    mail(B.sponsorEmail, "Sponsoring: " + it.name, "Hi Lisa,\n\nI'm interested in sponsoring \"" + it.name + "\" (" + fmt(it.cost - Math.min(it.funded, it.cost)) + " still needed).\n\n");
 
   function setLink(el, url){
     el.href = url;
