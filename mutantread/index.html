@@ -280,6 +280,18 @@
   .mutrow .role{ color:var(--fg-muted); font-size:.74rem; }
   .mutrow.locked .target{ color:var(--accent); }
 
+  #outputsBody > * + *{ margin-top:.6rem; }
+
+  .preflight{ border:1px solid var(--panel-border); background:var(--paper); padding:.6rem .75rem; display:flex; flex-direction:column; gap:.55rem; }
+  .preflight-row{ border-top:1px solid var(--panel-border); padding-top:.5rem; }
+  .preflight-row:first-of-type{ border-top:none; padding-top:0; }
+  .preflight-row-top{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+  .preflight-row-top strong{ font-size:.82rem; }
+  .preflight-value{ font-family:var(--font-mono); font-size:.95rem; margin-top:.25rem; letter-spacing:-0.01em; }
+  .preflight-advisory{ font-size:.74rem; color:var(--warn); margin-top:.2rem; }
+  .recode-btn{ margin-top:.35rem; }
+  button[aria-pressed="true"]{ border-color:var(--accent); color:var(--accent); font-weight:600; }
+
   .outputs-tabs{ display:flex; gap:.3rem; border-bottom:1px solid var(--panel-border); }
   .outputs-tabs button{ border:none; border-bottom:2px solid transparent; border-radius:0; background:transparent; }
   .outputs-tabs button[aria-selected="true"]{ border-bottom-color:var(--accent); color:var(--accent); font-weight:600; }
@@ -441,22 +453,25 @@
     </div>
 
     <div class="panel" id="panelOutputs">
-      <div class="panel-header"><span>Construct outputs</span></div>
+      <div class="panel-header"><span>Construct outputs</span><span class="chip idle" id="outputsChip">Idle</span></div>
       <div class="panel-body">
-        <div id="outputsEmpty" class="empty-state">Click “Build construct” to assemble the tagged fragment, scan for internal cut sites, design mutagenic primers and Gibson arms, and generate GenBank / CSV / FASTA files here.</div>
+        <div id="outputsEmpty" class="empty-state">Click “Build construct” to assemble the tagged fragment, scan for internal cut sites, run a Twist manufacturability pre-flight, design mutagenic primers and Gibson arms, and generate GenBank / CSV / FASTA / Twist files here.</div>
         <div id="outputsBody" style="display:none;">
+          <div id="qcLine" class="inline-note"></div>
+
+          <div id="preflightPanel" class="preflight"></div>
+
           <div class="scrollx">
             <div class="outputs-tabs" role="tablist">
-              <button type="button" role="tab" data-pane="sitescan" aria-selected="true">Site scan</button>
-              <button type="button" role="tab" data-pane="primers" aria-selected="false">Primers &amp; Gibson</button>
+              <button type="button" role="tab" data-pane="primers" aria-selected="true">Primers &amp; Gibson</button>
               <button type="button" role="tab" data-pane="genbank" aria-selected="false">GenBank</button>
               <button type="button" role="tab" data-pane="csv" aria-selected="false">Oligo CSV</button>
               <button type="button" role="tab" data-pane="fasta" aria-selected="false">FASTA</button>
+              <button type="button" role="tab" data-pane="twistcsv" aria-selected="false">Twist CSV</button>
             </div>
           </div>
 
-          <div class="output-pane active" data-pane="sitescan" id="pane-sitescan"></div>
-          <div class="output-pane" data-pane="primers" id="pane-primers"></div>
+          <div class="output-pane active" data-pane="primers" id="pane-primers"></div>
 
           <div class="output-pane" data-pane="genbank" id="pane-genbank">
             <div class="output-actions">
@@ -480,6 +495,18 @@
               <button id="downloadFasta" type="button">Download FASTA</button>
             </div>
             <pre class="codeblock" id="fastaText"></pre>
+          </div>
+
+          <div class="output-pane" data-pane="twistcsv" id="pane-twistcsv">
+            <p class="hint">Twist-ready CSV. Confirm the column format against the current upload template on Twist's order page before submitting — their templates change, and this tool does not talk to Twist's API.</p>
+            <div class="output-actions" role="group" aria-label="Twist CSV variant">
+              <button id="twistModeFragment" type="button" aria-pressed="true">Gene fragment</button>
+              <button id="twistModeOligo" type="button" aria-pressed="false">Oligo pool</button>
+              <button id="copyTwistCsv" type="button">Copy CSV</button>
+              <button id="downloadTwistCsv" type="button">Download CSV</button>
+            </div>
+            <div class="scrollx"><table id="twistCsvTable"></table></div>
+            <p class="hint"><a href="https://www.twistbioscience.com/products/genes/manufacturability-analyzer" target="_blank" rel="noopener">Verify at Twist</a> — their Manufacturability Analyzer is the authoritative check on this same sequence.</p>
           </div>
         </div>
       </div>
@@ -538,6 +565,15 @@ var ECOLI_CODON = { A:"GCG", R:"CGC", N:"AAC", D:"GAT", C:"TGC", Q:"CAG", E:"GAA
 var HUMAN_CODON = { A:"GCC", R:"AGA", N:"AAC", D:"GAC", C:"TGC", Q:"CAG", E:"GAG",
   G:"GGC", H:"CAC", I:"ATC", L:"CTG", K:"AAG", M:"ATG", F:"TTC", P:"CCC",
   S:"AGC", T:"ACC", W:"TGG", Y:"TAC", V:"GTG", "*":"TGA" };
+
+// Second-most-used codon per residue. M and W have only one codon each, so they have
+// no entry — a homopolymer run of either cannot be de-repeated by synonymous substitution.
+var ECOLI_SECONDARY = { A:"GCA", R:"AGA", N:"AAT", D:"GAC", C:"TGT", Q:"CAA", E:"GAG",
+  G:"GGT", H:"CAC", I:"ATC", L:"TTA", K:"AAG", F:"TTC", P:"CCA",
+  S:"TCT", T:"ACT", Y:"TAC", V:"GTT" };
+var HUMAN_SECONDARY = { A:"GCT", R:"AGG", N:"AAT", D:"GAT", C:"TGT", Q:"CAA", E:"GAA",
+  G:"GGA", H:"CAT", I:"ATT", L:"CTC", K:"AAA", F:"TTT", P:"CCT",
+  S:"AGT", T:"ACT", Y:"TAT", V:"GTT" };
 
 var TAGS = {
   his6tev: { label:"His6 + TEV", peptide:"MGSSHHHHHHSSGENLYFQG" },
@@ -757,6 +793,26 @@ function backtranslate(peptide, table){
   return out;
 }
 
+// A run of one most-frequent codon per residue turns any homopolymeric residue run
+// (His6 tags, poly-Gly/poly-Ser linkers) into a tandem-repeated 3 bp block. For runs of
+// three or more identical residues, alternate between the primary and secondary codon
+// so no single codon repeats back-to-back.
+function backtranslateSmart(peptide, table, secondaryTable){
+  var out = "";
+  var i = 0;
+  while (i < peptide.length) {
+    var j = i;
+    while (j < peptide.length && peptide[j] === peptide[i]) j++;
+    var runLen = j - i, aa = peptide[i];
+    var prim = table[aa] || "NNN";
+    var sec = secondaryTable && secondaryTable[aa];
+    var canAlternate = runLen >= 3 && sec && sec !== prim;
+    for (var k = i; k < j; k++) out += canAlternate ? ((k - i) % 2 === 0 ? prim : sec) : prim;
+    i = j;
+  }
+  return out;
+}
+
 function scanSites(orfDna, enzymes){
   var dna = orfDna.toUpperCase();
   var hits = [];
@@ -818,6 +874,153 @@ function gibsonArms(orfDna){
   var tailRegion = dna.slice(Math.max(0, dna.length - 24));
   var arm3 = reverseComplement(tailRegion);
   return { arm5:arm5, arm3:arm3, tm5:nnTm(arm5), tm3:nnTm(arm3) };
+}
+
+/* ---------------- Twist manufacturability pre-flight ---------------- */
+// Thresholds and the His-tag repeat behaviour are from Twist Bioscience's published
+// gene-synthesis design guidelines ("Are there any sequence limitations/design
+// guidelines for genes which I should follow?", twistbioscience.com). This is a local,
+// best-effort pre-flight, not a guarantee — Twist runs its own analysis at order time.
+
+function longestIdenticalCodonRun(orfDna){
+  var codons = [];
+  for (var i = 0; i + 3 <= orfDna.length; i += 3) codons.push(orfDna.slice(i, i + 3));
+  if (!codons.length) return 0;
+  var maxRun = 1, cur = 1;
+  for (var k = 1; k < codons.length; k++) {
+    if (codons[k] === codons[k - 1]) { cur++; if (cur > maxRun) maxRun = cur; }
+    else cur = 1;
+  }
+  return maxRun;
+}
+
+function checkGlobalGC(orf){
+  var gc = gcContent(orf);
+  var status = (gc >= 25 && gc <= 65) ? "pass" : "fail";
+  var advisory = gc > 60 ? "Above 60% — Twist notes lower GC improves success odds even within the allowed range." : null;
+  return {
+    key:"globalGC", label:"Global GC content", status:status,
+    text: gc.toFixed(1) + "% (threshold 25–65%)", advisory: advisory,
+    recodeRange: status === "fail" ? { start:0, end: Math.max(0, orf.length - 3) } : null
+  };
+}
+
+function checkLocalGC(orf, windowSize){
+  windowSize = windowSize || 50;
+  if (orf.length < windowSize) {
+    return { key:"localGC", label:"Local GC variation", status:"pass", text:"Sequence shorter than " + windowSize + " bp window — not applicable.", recodeRange:null };
+  }
+  var worstMin = null, worstMax = null;
+  for (var i = 0; i + windowSize <= orf.length; i++) {
+    var g = gcContent(orf.slice(i, i + windowSize));
+    if (!worstMin || g < worstMin.gc) worstMin = { gc:g, pos:i };
+    if (!worstMax || g > worstMax.gc) worstMax = { gc:g, pos:i };
+  }
+  var diff = worstMax.gc - worstMin.gc;
+  var status = diff > 52 ? "fail" : "pass";
+  var text = "Highest " + worstMax.gc.toFixed(1) + "% at " + (worstMax.pos + 1) + "–" + (worstMax.pos + windowSize) +
+    "; lowest " + worstMin.gc.toFixed(1) + "% at " + (worstMin.pos + 1) + "–" + (worstMin.pos + windowSize) +
+    " (Δ " + diff.toFixed(1) + " pts, limit 52).";
+  return { key:"localGC", label:"Local GC variation", status:status, text:text,
+    recodeRange: status === "fail" ? { start: worstMax.pos, end: worstMax.pos + windowSize } : null };
+}
+
+function findRepeat(dna, minLen){
+  minLen = minLen || 20;
+  var seen = {};
+  for (var i = 0; i + minLen <= dna.length; i++) {
+    var kmer = dna.substr(i, minLen);
+    if (Object.prototype.hasOwnProperty.call(seen, kmer)) {
+      var j = seen[kmer];
+      var len = minLen;
+      while (i + len < dna.length && j + len < dna.length && dna[i + len] === dna[j + len]) len++;
+      return { seq: dna.substr(j, len), length: len, posA: j + 1, posB: i + 1 };
+    }
+    seen[kmer] = i;
+  }
+  return null;
+}
+
+function checkRepeats(orf){
+  var rep = findRepeat(orf, 20);
+  if (!rep) return { key:"repeats", label:"Repeats", status:"pass", text:"No repeated subsequence of 20 bp or longer.", recodeRange:null };
+  var tm = nnTm(rep.seq);
+  var tmFlag = tm >= 60;
+  var shown = rep.seq.length > 30 ? rep.seq.slice(0, 30) + "…" : rep.seq;
+  var text = rep.length + " bp repeat at " + rep.posA + " and " + rep.posB + " (\"" + shown + "\") — Tm " + tm.toFixed(1) + "°C" + (tmFlag ? " (≥60°C flagged)." : ".");
+  return { key:"repeats", label:"Repeats", status:"fail", text:text, tm:tm, tmFlag:tmFlag,
+    recodeRange: { start: rep.posB - 1, end: rep.posB - 1 + rep.length } };
+}
+
+function longestHomopolymer(dna){
+  var best = { len: dna.length ? 1 : 0, pos:0, base: dna.charAt(0) };
+  var runLen = 1, runStart = 0;
+  for (var i = 1; i <= dna.length; i++) {
+    if (i < dna.length && dna[i] === dna[i - 1]) {
+      runLen++;
+    } else {
+      if (runLen > best.len) best = { len:runLen, pos:runStart, base: dna[i - 1] };
+      runStart = i; runLen = 1;
+    }
+  }
+  return best;
+}
+
+function checkHomopolymers(orf){
+  var h = longestHomopolymer(orf);
+  var flagged = h.len >= 8;
+  return {
+    key:"homopolymer", label:"Homopolymers", status:"advisory", flagged:flagged,
+    text: h.len + " bp run of \"" + h.base + "\" at position " + (h.pos + 1) +
+      (flagged ? " — flagged (≥8 bp)." : " (no hard limit; Twist advises minimising).")
+  };
+}
+
+function runPreflight(orf){
+  return [checkGlobalGC(orf), checkLocalGC(orf), checkRepeats(orf), checkHomopolymers(orf)];
+}
+
+// Toggles every codon overlapping [startNt, endNt) between its primary and secondary
+// choice. Synonymous only — a codon is only ever swapped for the other known codon of
+// the SAME residue, so the translated protein sequence never changes.
+function recodeRange(orf, translation, table, secondaryTable, startNt, endNt){
+  var codons = [];
+  for (var i = 0; i + 3 <= orf.length; i += 3) codons.push(orf.slice(i, i + 3));
+  var changed = 0;
+  for (var ci = 0; ci < codons.length; ci++) {
+    var ntStart = ci * 3, ntEnd = ntStart + 3;
+    if (ntEnd <= startNt || ntStart >= endNt) continue;
+    var aa = translation[ci];
+    if (aa === undefined) continue;
+    var prim = table[aa], sec = secondaryTable[aa];
+    if (!sec || sec === prim) continue;
+    var current = codons[ci];
+    var other = current === prim ? sec : (current === sec ? prim : null);
+    if (!other) continue;
+    codons[ci] = other;
+    changed++;
+  }
+  return { orf: codons.join(""), changed: changed };
+}
+
+function sanitizeTwistName(name){
+  return String(name).replace(/[^A-Za-z0-9_-]/g, "_");
+}
+
+function buildTwistCsvRows(ctx, mode){
+  var rows = [];
+  if (mode === "oligopool") {
+    (ctx.mutations || []).filter(function(m){ return m.enabled; }).forEach(function(m){
+      var design = designMutagenicPrimer(ctx.orf, ctx.variantCodonStart, ctx.table[m.newAA] || "NNN");
+      if (!design) return;
+      var base = sanitizeTwistName(ctx.geneName + "_" + ctx.proteinPos + m.refAA + m.newAA);
+      rows.push({ Name: base + "_F", Sequence: design.forward });
+      rows.push({ Name: base + "_R", Sequence: design.reverse });
+    });
+  } else {
+    rows.push({ Name: sanitizeTwistName(ctx.geneName + "_" + ctx.start + "_" + ctx.end + "_ORF"), Sequence: ctx.orf });
+  }
+  return rows;
 }
 
 function pad(str, width){ str = String(str); while (str.length < width) str += " "; return str; }
@@ -1028,14 +1231,18 @@ function parseFasta(text){
 /* ====================== expose pure functions for tests ====================== */
 var MR_EXPORTS = {
   AA1_TO_3: AA1_TO_3, AA3_TO_1: AA3_TO_1, CODON_TABLE: CODON_TABLE, AA_TO_CODONS: AA_TO_CODONS,
-  ECOLI_CODON: ECOLI_CODON, HUMAN_CODON: HUMAN_CODON, TAGS: TAGS, ENZYMES: ENZYMES,
+  ECOLI_CODON: ECOLI_CODON, HUMAN_CODON: HUMAN_CODON, ECOLI_SECONDARY: ECOLI_SECONDARY, HUMAN_SECONDARY: HUMAN_SECONDARY,
+  TAGS: TAGS, ENZYMES: ENZYMES,
   aa1to3: aa1to3, reverseComplement: reverseComplement, gcContent: gcContent, wallaceTm: wallaceTm,
   nnTm: nnTm, parseVariant: parseVariant, inferAltFromC: inferAltFromC, proposeWindow: proposeWindow,
   smallestContainingFeature: smallestContainingFeature, buildMutationRows: buildMutationRows,
-  backtranslate: backtranslate, scanSites: scanSites, designMutagenicPrimer: designMutagenicPrimer,
+  backtranslate: backtranslate, backtranslateSmart: backtranslateSmart, scanSites: scanSites, designMutagenicPrimer: designMutagenicPrimer,
   gibsonArms: gibsonArms, buildGenbank: buildGenbank, buildFasta: buildFasta, buildOligoCsvRows: buildOligoCsvRows,
   rowsToCsv: rowsToCsv, CSV_COLUMNS: CSV_COLUMNS, parseVcfHgvsc: parseVcfHgvsc, parseFasta: parseFasta,
-  SYNTHETIC_VCF: SYNTHETIC_VCF, formatOrigin: formatOrigin, wrapQualifier: wrapQualifier, stripTranscriptPrefix: stripTranscriptPrefix
+  SYNTHETIC_VCF: SYNTHETIC_VCF, formatOrigin: formatOrigin, wrapQualifier: wrapQualifier, stripTranscriptPrefix: stripTranscriptPrefix,
+  longestIdenticalCodonRun: longestIdenticalCodonRun, checkGlobalGC: checkGlobalGC, checkLocalGC: checkLocalGC,
+  findRepeat: findRepeat, checkRepeats: checkRepeats, longestHomopolymer: longestHomopolymer, checkHomopolymers: checkHomopolymers,
+  runPreflight: runPreflight, recodeRange: recodeRange, sanitizeTwistName: sanitizeTwistName, buildTwistCsvRows: buildTwistCsvRows
 };
 if (typeof globalThis !== "undefined") globalThis.__MR__ = MR_EXPORTS;
 
@@ -1060,8 +1267,9 @@ var els = {};
  "domainMapHost","domainLegend",
  "structureViewer","structureChip",
  "mutRows","addMutRow","addMutSelect","addMutBtn",
- "outputsEmpty","outputsBody","genbankText","fastaText","csvTable",
+ "outputsEmpty","outputsBody","outputsChip","qcLine","preflightPanel","genbankText","fastaText","csvTable",
  "copyGenbank","downloadGenbank","copyCsv","downloadCsv","copyFasta","downloadFasta",
+ "twistModeFragment","twistModeOligo","twistCsvTable","copyTwistCsv","downloadTwistCsv",
  "themeToggle"
 ].forEach(function(id){ els[id] = document.getElementById(id); });
 
@@ -1339,6 +1547,7 @@ function disableDownstream(){
   els.outputsEmpty.style.display = "block";
   els.outputsBody.style.display = "none";
   setChip(els.structureChip, "idle", "Idle");
+  setChip(els.outputsChip, "idle", "Idle");
 }
 
 function proceedAfterValidation(){
@@ -1516,11 +1725,12 @@ function buildConstruct(){
   var tag = TAGS[tagKey];
   var codonKey = els.codonSelect.value;
   var table = codonKey === "human" ? HUMAN_CODON : ECOLI_CODON;
+  var secondaryTable = codonKey === "human" ? HUMAN_SECONDARY : ECOLI_SECONDARY;
   var tableLabel = codonKey === "human" ? "Human" : "E. coli K-12";
 
   var fragment = state.sequence.slice(start - 1, end);
   var translation = tag.peptide + fragment;
-  var orf = backtranslate(tag.peptide, table) + backtranslate(fragment, table) + table["*"];
+  var orf = backtranslateSmart(translation, table, secondaryTable) + table["*"];
 
   var variantCodonStart = (tag.peptide.length + (state.proteinPos - start)) * 3;
 
@@ -1529,30 +1739,100 @@ function buildConstruct(){
     start: start, end: end, tagLabel: tag.label, tagPeptide: tag.peptide, fragment: fragment,
     translation: translation, orf: orf, features: state.features, proteinPos: state.proteinPos,
     refAA: state.refAA, altAA: state.altAA, mutations: state.mutations, table: table,
-    codonTableLabel: tableLabel, variantCodonStart: variantCodonStart
+    secondaryTable: secondaryTable, codonTableLabel: tableLabel, variantCodonStart: variantCodonStart,
+    twistMode: "fragment"
   };
   state.built = ctx;
 
-  renderSiteScan(orf);
-  renderPrimersAndGibson(ctx);
-  renderGenbank(ctx);
-  renderCsv(ctx);
-  renderFasta(ctx);
+  refreshOutputs(ctx);
 
   els.outputsEmpty.style.display = "none";
   els.outputsBody.style.display = "block";
 }
 
+function refreshOutputs(ctx){
+  renderSiteScan(ctx.orf);
+  renderPrimersAndGibson(ctx);
+  renderPreflight(ctx);
+  renderGenbank(ctx);
+  renderCsv(ctx);
+  renderFasta(ctx);
+  renderTwistCsv(ctx);
+}
+
 function renderSiteScan(orf){
   var hits = scanSites(orf, ENZYMES);
-  var pane = document.getElementById("pane-sitescan");
+  var codonCount = Math.floor(orf.length / 3);
   if (!hits.length) {
-    pane.innerHTML = '<p class="inline-note">Clean — no Golden Gate (BsaI/BsmBI/SapI) or classic cloning sites found in ' + Math.floor(orf.length/3) + ' codons (' + orf.length + ' bp).</p>';
+    els.qcLine.innerHTML = '<span class="chip pass">QC</span> Clean — no Golden Gate (BsaI/BsmBI/SapI) or classic cloning sites found in ' + codonCount + ' codons (' + orf.length + ' bp).';
     return;
   }
   var rows = hits.map(function(h){ return "<tr><td>" + h.enzyme + "</td><td class=\"seq\">" + h.site + "</td><td>" + h.position + "</td><td>" + h.strand + "</td></tr>"; }).join("");
-  pane.innerHTML = '<div class="scrollx"><table><tr><th>Enzyme</th><th>Site</th><th>Position (nt)</th><th>Strand</th></tr>' + rows + '</table></div>';
+  els.qcLine.innerHTML = '<span class="chip fail">QC</span> ' + hits.length + ' internal cut site(s) found in ' + codonCount + ' codons (' + orf.length + ' bp).' +
+    '<div class="scrollx" style="margin-top:.4rem;"><table><tr><th>Enzyme</th><th>Site</th><th>Position (nt)</th><th>Strand</th></tr>' + rows + '</table></div>';
 }
+
+/* ---------------- Twist manufacturability pre-flight (panel) ---------------- */
+function renderPreflight(ctx){
+  var checks = runPreflight(ctx.orf);
+  ctx.preflight = checks;
+  var anyFail = checks.some(function(c){ return c.status === "fail"; });
+  setChip(els.outputsChip, anyFail ? "fail" : "pass", anyFail ? "Review before ordering" : "Ready to order");
+
+  var html = '<p class="hint">Twist Bioscience manufacturability pre-flight — a local check against Twist’s published synthesis guidelines. Twist runs its own analysis at order time; that is the authority, not this panel.</p>';
+  checks.forEach(function(c){
+    var chipClass = c.status === "advisory" ? (c.flagged ? "warn" : "pass") : c.status;
+    var chipText = c.status === "advisory" ? "Advisory" : c.status;
+    html += '<div class="preflight-row">' +
+      '<div class="preflight-row-top"><span class="chip ' + chipClass + '">' + chipText + '</span><strong>' + c.label + '</strong></div>' +
+      '<div class="preflight-value">' + escapeXml(c.text) + '</div>' +
+      (c.advisory ? '<div class="preflight-advisory">' + escapeXml(c.advisory) + '</div>' : "") +
+      (c.recodeRange ? '<button class="small recode-btn" data-key="' + c.key + '" type="button">Recode this window</button>' : "") +
+      '</div>';
+  });
+  html += '<p class="hint"><a href="https://www.twistbioscience.com/products/genes/manufacturability-analyzer" target="_blank" rel="noopener">Verify at Twist</a> — their Manufacturability Analyzer checks this same sequence against the current, authoritative rules.</p>';
+  html += '<div id="recodeLog" class="inline-note" style="display:none;"></div>';
+  els.preflightPanel.innerHTML = html;
+
+  els.preflightPanel.querySelectorAll(".recode-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){ handleRecode(ctx, btn.getAttribute("data-key")); });
+  });
+}
+
+function handleRecode(ctx, key){
+  var check = (ctx.preflight || []).filter(function(c){ return c.key === key; })[0];
+  if (!check || !check.recodeRange) return;
+  var result = recodeRange(ctx.orf, ctx.translation, ctx.table, ctx.secondaryTable, check.recodeRange.start, check.recodeRange.end);
+  ctx.orf = result.orf;
+  refreshOutputs(ctx);
+  var log = document.getElementById("recodeLog");
+  if (log) {
+    log.style.display = "block";
+    log.textContent = "Recode: changed " + result.changed + " codon" + (result.changed === 1 ? "" : "s") +
+      " in the " + check.label.toLowerCase() + " window to its synonymous second-choice codon. Protein sequence unchanged — only the DNA changed.";
+  }
+}
+
+/* ---------------- Twist-ready CSV ---------------- */
+function renderTwistCsv(ctx){
+  var rows = buildTwistCsvRows(ctx, ctx.twistMode);
+  ctx.twistCsvRows = rows;
+  ctx.twistCsv = rowsToCsv(rows, ["Name","Sequence"]);
+  var html = "<tr><th>Name</th><th>Sequence</th></tr>";
+  rows.forEach(function(r){ html += "<tr><td>" + r.Name + "</td><td class=\"seq\">" + r.Sequence + "</td></tr>"; });
+  els.twistCsvTable.innerHTML = html;
+}
+function setTwistMode(mode){
+  if (!state.built) return;
+  state.built.twistMode = mode;
+  els.twistModeFragment.setAttribute("aria-pressed", String(mode === "fragment"));
+  els.twistModeOligo.setAttribute("aria-pressed", String(mode === "oligopool"));
+  renderTwistCsv(state.built);
+}
+els.twistModeFragment.addEventListener("click", function(){ setTwistMode("fragment"); });
+els.twistModeOligo.addEventListener("click", function(){ setTwistMode("oligopool"); });
+els.copyTwistCsv.addEventListener("click", function(){ if (state.built) copyText(state.built.twistCsv); });
+els.downloadTwistCsv.addEventListener("click", function(){ if (state.built) downloadText(state.built.accession + "_twist_" + state.built.twistMode + ".csv", state.built.twistCsv); });
 
 function renderPrimersAndGibson(ctx){
   var pane = document.getElementById("pane-primers");
