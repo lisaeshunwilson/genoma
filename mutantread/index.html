@@ -1,0 +1,1635 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MutantRead — Genoma Read Suite</title>
+<meta name="description" content="Resolve an HGVS variant against UniProt, validate the coordinates, and generate an expression construct and mutagenesis panel ready to order.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef3f6;
+    --paper:#f6f9fb;
+    --panel-bg:#ffffff;
+    --panel-header-bg:#e7edf1;
+    --panel-border:#c7d3da;
+    --fg:#152027;
+    --fg-muted:#55666f;
+    --fg-faint:#8697a0;
+    --accent:#0d6d64;
+    --accent-strong:#095a53;
+    --accent-contrast:#ffffff;
+    --accent-soft:#dcece9;
+    --link:#0d6d64;
+
+    --pass:#1d7a4c;
+    --pass-bg:#e1f1e6;
+    --pass-border:#bfe1cb;
+    --warn:#8a5a00;
+    --warn-bg:#fbf0d4;
+    --warn-border:#eed89b;
+    --fail:#a82a2a;
+    --fail-bg:#fbe4e4;
+    --fail-border:#eeb9b9;
+
+    --nt-a:#1f9254;
+    --nt-c:#2063b5;
+    --nt-g:#1b2024;
+    --nt-t:#c23a3a;
+
+    --input-bg:#ffffff;
+    --input-border:#a9bac2;
+    --input-focus:#0d6d64;
+
+    --track-bg:#dde6ea;
+    --repeat-color:#0d6d64;
+    --domain-color:#5c7e8f;
+    --pin-color:#c23a3a;
+    --tick-color:#8697a0;
+
+    --font-sans:'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+    --rail-width:366px;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1418;
+      --paper:#131a1f;
+      --panel-bg:#161e24;
+      --panel-header-bg:#1b252c;
+      --panel-border:#2b3942;
+      --fg:#e3eaee;
+      --fg-muted:#9fb0b9;
+      --fg-faint:#6d808a;
+      --accent:#2fb6a8;
+      --accent-strong:#49cabd;
+      --accent-contrast:#071412;
+      --accent-soft:#17312e;
+      --link:#4fd2c4;
+
+      --pass:#45cd84;
+      --pass-bg:#122a1c;
+      --pass-border:#1f4a30;
+      --warn:#e4b63f;
+      --warn-bg:#2f2610;
+      --warn-border:#54441a;
+      --fail:#f0706f;
+      --fail-bg:#321515;
+      --fail-border:#5a2424;
+
+      --nt-a:#43d885;
+      --nt-c:#56a8f2;
+      --nt-g:#c6d0d6;
+      --nt-t:#f0706f;
+
+      --input-bg:#111820;
+      --input-border:#394750;
+      --input-focus:#2fb6a8;
+
+      --track-bg:#1e282f;
+      --repeat-color:#2fb6a8;
+      --domain-color:#7b9aab;
+      --pin-color:#f0706f;
+      --tick-color:#6d808a;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"]{
+    --bg:#0f1418;
+    --paper:#131a1f;
+    --panel-bg:#161e24;
+    --panel-header-bg:#1b252c;
+    --panel-border:#2b3942;
+    --fg:#e3eaee;
+    --fg-muted:#9fb0b9;
+    --fg-faint:#6d808a;
+    --accent:#2fb6a8;
+    --accent-strong:#49cabd;
+    --accent-contrast:#071412;
+    --accent-soft:#17312e;
+    --link:#4fd2c4;
+
+    --pass:#45cd84;
+    --pass-bg:#122a1c;
+    --pass-border:#1f4a30;
+    --warn:#e4b63f;
+    --warn-bg:#2f2610;
+    --warn-border:#54441a;
+    --fail:#f0706f;
+    --fail-bg:#321515;
+    --fail-border:#5a2424;
+
+    --nt-a:#43d885;
+    --nt-c:#56a8f2;
+    --nt-g:#c6d0d6;
+    --nt-t:#f0706f;
+
+    --input-bg:#111820;
+    --input-border:#394750;
+    --input-focus:#2fb6a8;
+
+    --track-bg:#1e282f;
+    --repeat-color:#2fb6a8;
+    --domain-color:#7b9aab;
+    --pin-color:#f0706f;
+    --tick-color:#6d808a;
+    color-scheme: dark;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:var(--font-sans);
+    font-size:14px;
+    line-height:1.45;
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+  }
+
+  a{ color:var(--link); }
+  code, .mono, input, textarea, select, table, .seq{ font-family:var(--font-mono); }
+
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  header.site-header{
+    display:flex; align-items:center; justify-content:space-between; gap:1rem; row-gap:.3rem;
+    flex-wrap:wrap;
+    padding:.7rem 1.1rem;
+    background:var(--panel-header-bg);
+    border-bottom:1px solid var(--panel-border);
+    position:sticky; top:0; z-index:40;
+  }
+  .brand{ display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; }
+  .brand h1{ margin:0; font-size:1.05rem; font-weight:700; letter-spacing:.01em; }
+  .brand .suite{ font-size:.72rem; color:var(--fg-muted); text-transform:uppercase; letter-spacing:.08em; }
+  .brand .back{ font-size:.75rem; color:var(--fg-muted); text-decoration:none; border:1px solid var(--panel-border); padding:.15rem .5rem; border-radius:3px; }
+  .brand .back:hover{ color:var(--accent); border-color:var(--accent); }
+
+  button{
+    font-family:var(--font-sans);
+    font-size:.82rem;
+    background:var(--panel-bg);
+    color:var(--fg);
+    border:1px solid var(--input-border);
+    padding:.4rem .7rem;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  button:hover{ border-color:var(--accent); color:var(--accent); }
+  button.primary{ background:var(--accent); color:var(--accent-contrast); border-color:var(--accent-strong); font-weight:600; }
+  button.primary:hover{ background:var(--accent-strong); color:var(--accent-contrast); }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+  button.small{ font-size:.72rem; padding:.25rem .5rem; }
+  #themeToggle{ font-size:.75rem; }
+
+  .workbench{
+    display:grid;
+    grid-template-columns: var(--rail-width) 1fr;
+    gap:1rem;
+    align-items:start;
+    padding:1rem;
+    max-width:1440px;
+    margin:0 auto;
+  }
+  @media (max-width:900px){
+    .workbench{ grid-template-columns: 1fr; }
+    .rail{ position:static !important; }
+  }
+
+  .rail{ position:sticky; top:58px; display:flex; flex-direction:column; gap:.8rem; max-height:calc(100vh - 70px); overflow-y:auto; }
+  .stack{ display:flex; flex-direction:column; gap:.8rem; min-width:0; }
+
+  .panel{ background:var(--panel-bg); border:1px solid var(--panel-border); }
+  .panel-header{
+    display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+    background:var(--panel-header-bg);
+    border-bottom:1px solid var(--panel-border);
+    padding:.45rem .75rem;
+    font-weight:600; font-size:.78rem; letter-spacing:.02em;
+  }
+  .panel-body{ padding:.75rem; }
+  .panel-body > * + *{ margin-top:.6rem; }
+
+  .chip{ display:inline-flex; align-items:center; gap:.3rem; font-size:.68rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:.15rem .5rem; border-radius:3px; border:1px solid; }
+  .chip.pass{ color:var(--pass); background:var(--pass-bg); border-color:var(--pass-border); }
+  .chip.warn{ color:var(--warn); background:var(--warn-bg); border-color:var(--warn-border); }
+  .chip.fail{ color:var(--fail); background:var(--fail-bg); border-color:var(--fail-border); }
+  .chip.idle{ color:var(--fg-muted); background:var(--paper); border-color:var(--panel-border); }
+
+  label{ display:block; font-size:.74rem; color:var(--fg-muted); margin-bottom:.2rem; }
+  .field{ margin-top:.55rem; }
+  input[type="text"], input[type="number"], select, textarea{
+    width:100%; background:var(--input-bg); color:var(--fg); border:1px solid var(--input-border);
+    border-radius:3px; padding:.4rem .5rem; font-size:.82rem;
+  }
+  input:focus, select:focus, textarea:focus{ border-color:var(--input-focus); }
+  textarea{ resize:vertical; min-height:4.5rem; }
+  .row{ display:flex; gap:.5rem; align-items:flex-end; }
+  .row > *{ flex:1; min-width:0; }
+  .hint{ font-size:.72rem; color:var(--fg-faint); }
+
+  details.offline{ border:1px solid var(--panel-border); border-radius:3px; }
+  details.offline > summary{ cursor:pointer; padding:.4rem .6rem; font-size:.78rem; color:var(--fg-muted); }
+  details.offline[open] > summary{ border-bottom:1px solid var(--panel-border); }
+  details.offline .inner{ padding:.6rem; display:flex; flex-direction:column; gap:.5rem; }
+
+  ul.checklist{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.4rem; }
+  ul.checklist li{ border-left:3px solid var(--panel-border); padding:.35rem .55rem; background:var(--paper); font-size:.8rem; }
+  ul.checklist li.pass{ border-color:var(--pass); }
+  ul.checklist li.warn{ border-color:var(--warn); }
+  ul.checklist li.fail{ border-color:var(--fail); background:var(--fail-bg); }
+  ul.checklist li .l{ font-weight:600; font-size:.66rem; text-transform:uppercase; letter-spacing:.04em; margin-right:.4rem; }
+  ul.checklist li.pass .l{ color:var(--pass); }
+  ul.checklist li.warn .l{ color:var(--warn); }
+  ul.checklist li.fail .l{ color:var(--fail); }
+  ul.checklist li .reasoning{ display:block; margin-top:.2rem; color:var(--fg-muted); font-family:var(--font-mono); font-size:.74rem; }
+
+  .empty-state{ font-size:.8rem; color:var(--fg-faint); font-style:italic; padding:.4rem 0; }
+
+  .scrollx{ overflow-x:auto; max-width:100%; }
+  table{ border-collapse:collapse; width:100%; font-size:.76rem; }
+  table th, table td{ border-bottom:1px solid var(--panel-border); padding:.3rem .45rem; text-align:left; white-space:nowrap; }
+  table th{ color:var(--fg-muted); font-weight:600; font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; }
+  table td.seq{ font-family:var(--font-mono); }
+
+  .nt-A{ color:var(--nt-a); } .nt-C{ color:var(--nt-c); } .nt-G{ color:var(--nt-g); } .nt-T{ color:var(--nt-t); }
+  :root[data-theme="dark"] .nt-G, :root:not([data-theme="light"]) .nt-G{ color:var(--nt-g); }
+
+  .domainmap-wrap{ overflow-x:auto; padding-bottom:.3rem; }
+  .domainmap-wrap svg{ display:block; }
+  .legend{ display:flex; flex-wrap:wrap; gap:.8rem; font-size:.72rem; color:var(--fg-muted); margin-top:.3rem; }
+  .legend .sw{ display:inline-block; width:.7rem; height:.7rem; margin-right:.3rem; vertical-align:-1px; border-radius:1px; }
+
+  #structureViewer{ width:100%; height:320px; background:var(--paper); border:1px solid var(--panel-border); position:relative; }
+  .viewer-note{ font-size:.72rem; color:var(--fg-faint); }
+
+  .mutrow{ display:grid; grid-template-columns: 1.4rem 4.2rem 1fr auto; gap:.5rem; align-items:center; padding:.3rem 0; border-bottom:1px solid var(--panel-border); font-size:.8rem; }
+  .mutrow:last-child{ border-bottom:none; }
+  .mutrow .target{ font-family:var(--font-mono); font-weight:600; }
+  .mutrow .role{ color:var(--fg-muted); font-size:.74rem; }
+  .mutrow.locked .target{ color:var(--accent); }
+
+  .outputs-tabs{ display:flex; gap:.3rem; border-bottom:1px solid var(--panel-border); }
+  .outputs-tabs button{ border:none; border-bottom:2px solid transparent; border-radius:0; background:transparent; }
+  .outputs-tabs button[aria-selected="true"]{ border-bottom-color:var(--accent); color:var(--accent); font-weight:600; }
+  .output-pane{ display:none; }
+  .output-pane.active{ display:block; }
+  .output-actions{ display:flex; gap:.4rem; flex-wrap:wrap; }
+  pre.codeblock{ background:var(--paper); border:1px solid var(--panel-border); padding:.6rem; font-family:var(--font-mono); font-size:.72rem; white-space:pre; overflow-x:auto; max-height:320px; overflow-y:auto; margin:0; }
+
+  footer.site-footer{ text-align:center; color:var(--fg-faint); font-size:.72rem; padding:1.2rem; }
+
+  .inline-note{ font-size:.74rem; color:var(--fg-muted); border-left:3px solid var(--accent); padding:.3rem .55rem; background:var(--accent-soft); }
+  .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+  @media (max-width:400px){
+    .mutrow{ grid-template-columns: 1.4rem 3.4rem 1fr; }
+    .mutrow .add-note{ display:none; }
+  }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="brand">
+    <h1>MutantRead</h1>
+    <span class="suite">Genoma Read Suite</span>
+    <a class="back" href="/">genomainstitute.org</a>
+  </div>
+  <button id="themeToggle" type="button" aria-label="Toggle color theme">Theme: Auto</button>
+</header>
+
+<main class="workbench">
+  <!-- ============== LEFT RAIL ============== -->
+  <section class="rail" aria-label="Inputs">
+
+    <div class="panel" id="panelTarget">
+      <div class="panel-header"><span>Target protein</span><span class="chip idle" id="resolveChip">Idle</span></div>
+      <div class="panel-body">
+        <div class="field">
+          <label for="accessionInput">UniProt accession</label>
+          <input type="text" id="accessionInput" value="Q13813" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="row">
+          <button class="primary" id="resolveBtn" type="button">Resolve</button>
+          <button id="exportFixtureBtn" type="button" disabled>Export fixture JSON</button>
+        </div>
+        <p class="hint" id="resolveNote">Fetches UniProtKB. Cached in this browser so the demo survives a dead connection.</p>
+
+        <details class="offline">
+          <summary>Offline input (paste FASTA or fixture JSON)</summary>
+          <div class="inner">
+            <textarea id="offlinePaste" placeholder="Paste a UniProt FASTA record, or a MutantRead fixture JSON ({accession, name, gene, sequence, features})."></textarea>
+            <button id="loadOfflineBtn" type="button">Load pasted data</button>
+            <p class="hint">Only the structure viewer needs network once a target is loaded this way.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="panel" id="panelVariant">
+      <div class="panel-header"><span>Variant</span><span class="chip idle" id="variantChip">Idle</span></div>
+      <div class="panel-body">
+        <div class="field">
+          <label for="variantInput">HGVS variant (c., p., or one-letter)</label>
+          <input type="text" id="variantInput" value="c.6958A>G" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="row">
+          <button class="primary" id="validateBtn" type="button">Resolve &amp; validate</button>
+        </div>
+        <button id="loadVcfBtn" type="button" style="margin-top:.5rem; width:100%;">Load synthetic trio VCF</button>
+        <p class="hint" id="vcfNote"></p>
+      </div>
+    </div>
+
+    <div class="panel" id="panelWindow">
+      <div class="panel-header"><span>Construct window</span></div>
+      <div class="panel-body">
+        <div class="field">
+          <label for="windowStrategy">Boundary strategy</label>
+          <select id="windowStrategy">
+            <option value="repeat">Variant repeat + 1 flanking repeat each side</option>
+            <option value="domain">Variant domain only</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="windowStart">Start (residue)</label>
+            <input type="number" id="windowStart" min="1">
+          </div>
+          <div class="field">
+            <label for="windowEnd">End (residue)</label>
+            <input type="number" id="windowEnd" min="1">
+          </div>
+        </div>
+        <p class="hint" id="windowNote">Resolve a target and a valid variant to propose a window.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="panelOptions">
+      <div class="panel-header"><span>Build options</span></div>
+      <div class="panel-body">
+        <div class="field">
+          <label for="tagSelect">N-terminal tag</label>
+          <select id="tagSelect">
+            <option value="his6tev">His6 + TEV site</option>
+            <option value="his6">His6</option>
+            <option value="barem">Bare Met (no tag)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="codonSelect">Back-translation codon table</label>
+          <select id="codonSelect">
+            <option value="ecoli">E. coli K-12, most-frequent codon</option>
+            <option value="human">Human, most-frequent codon</option>
+          </select>
+        </div>
+        <button class="primary" id="buildBtn" type="button" style="width:100%;" disabled>Build construct</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== RESULTS STACK ============== -->
+  <section class="stack" aria-label="Results">
+
+    <div class="panel" id="panelChecklist">
+      <div class="panel-header"><span>Validation checklist</span><span class="chip idle" id="checklistChip">Waiting</span></div>
+      <div class="panel-body">
+        <div id="checklistBody" class="empty-state">Resolve a target protein and click “Resolve &amp; validate” to see the coordinate checks, isoform guard, and domain lookup here.</div>
+        <div id="ambiguousResolver" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panelDomainMap">
+      <div class="panel-header"><span>Domain map</span></div>
+      <div class="panel-body">
+        <div class="domainmap-wrap scrollx">
+          <div id="domainMapHost"><p class="empty-state">The full-length domain map — spectrin repeats, other annotated regions, the construct window, and the variant pin — appears here once a target resolves.</p></div>
+        </div>
+        <div class="legend" id="domainLegend"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panelStructure">
+      <div class="panel-header"><span>Predicted structure</span><span class="chip idle" id="structureChip">Idle</span></div>
+      <div class="panel-body">
+        <div id="structureViewer"><p class="empty-state" style="padding:1rem;">An AlphaFold model (database lookup, not a live prediction) will load here, zoomed to the construct window, once a target resolves.</p></div>
+        <p class="viewer-note">AlphaFold DB model, colored by construct window (accent) and variant residue (red). Only this panel needs network — everything else works from the cached/offline target.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="panelMutagenesis">
+      <div class="panel-header"><span>Mutagenesis panel</span></div>
+      <div class="panel-body">
+        <div id="mutRows"><p class="empty-state">Mechanism-control mutations (alanine scan, charge swap, isosteric, helix controls) are proposed here alongside the patient variant once validation passes.</p></div>
+        <div class="row" id="addMutRow" style="display:none;">
+          <select id="addMutSelect" aria-label="Residue to add"></select>
+          <button id="addMutBtn" type="button">Add mutation</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panelOutputs">
+      <div class="panel-header"><span>Construct outputs</span></div>
+      <div class="panel-body">
+        <div id="outputsEmpty" class="empty-state">Click “Build construct” to assemble the tagged fragment, scan for internal cut sites, design mutagenic primers and Gibson arms, and generate GenBank / CSV / FASTA files here.</div>
+        <div id="outputsBody" style="display:none;">
+          <div class="scrollx">
+            <div class="outputs-tabs" role="tablist">
+              <button type="button" role="tab" data-pane="sitescan" aria-selected="true">Site scan</button>
+              <button type="button" role="tab" data-pane="primers" aria-selected="false">Primers &amp; Gibson</button>
+              <button type="button" role="tab" data-pane="genbank" aria-selected="false">GenBank</button>
+              <button type="button" role="tab" data-pane="csv" aria-selected="false">Oligo CSV</button>
+              <button type="button" role="tab" data-pane="fasta" aria-selected="false">FASTA</button>
+            </div>
+          </div>
+
+          <div class="output-pane active" data-pane="sitescan" id="pane-sitescan"></div>
+          <div class="output-pane" data-pane="primers" id="pane-primers"></div>
+
+          <div class="output-pane" data-pane="genbank" id="pane-genbank">
+            <div class="output-actions">
+              <button id="copyGenbank" type="button">Copy .gb</button>
+              <button id="downloadGenbank" type="button">Download .gb</button>
+            </div>
+            <pre class="codeblock" id="genbankText"></pre>
+          </div>
+
+          <div class="output-pane" data-pane="csv" id="pane-csv">
+            <div class="output-actions">
+              <button id="copyCsv" type="button">Copy CSV</button>
+              <button id="downloadCsv" type="button">Download CSV</button>
+            </div>
+            <div class="scrollx"><table id="csvTable"></table></div>
+          </div>
+
+          <div class="output-pane" data-pane="fasta" id="pane-fasta">
+            <div class="output-actions">
+              <button id="copyFasta" type="button">Copy FASTA</button>
+              <button id="downloadFasta" type="button">Download FASTA</button>
+            </div>
+            <pre class="codeblock" id="fastaText"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<footer class="site-footer">MutantRead · Genoma Read Suite · All structure and construct proposals are computational suggestions — verify before ordering.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/3dmol@2.0.4/build/3Dmol-min.js" defer></script>
+<script>
+(function(){
+"use strict";
+
+/* ======================================================================
+   PURE DATA / FUNCTIONS — no DOM access below this block's closing marker.
+   Exposed on globalThis.__MR__ for unit testing outside the browser.
+   ====================================================================== */
+
+var AA1_TO_3 = {
+  A:"Ala", R:"Arg", N:"Asn", D:"Asp", C:"Cys", Q:"Gln", E:"Glu", G:"Gly",
+  H:"His", I:"Ile", L:"Leu", K:"Lys", M:"Met", F:"Phe", P:"Pro", S:"Ser",
+  T:"Thr", W:"Trp", Y:"Tyr", V:"Val", "*":"Ter"
+};
+var AA3_TO_1 = {};
+Object.keys(AA1_TO_3).forEach(function(k){ AA3_TO_1[AA1_TO_3[k].toUpperCase()] = k; });
+
+var CODON_TABLE = {
+  TTT:"F", TTC:"F", TTA:"L", TTG:"L",
+  CTT:"L", CTC:"L", CTA:"L", CTG:"L",
+  ATT:"I", ATC:"I", ATA:"I", ATG:"M",
+  GTT:"V", GTC:"V", GTA:"V", GTG:"V",
+  TCT:"S", TCC:"S", TCA:"S", TCG:"S",
+  CCT:"P", CCC:"P", CCA:"P", CCG:"P",
+  ACT:"T", ACC:"T", ACA:"T", ACG:"T",
+  GCT:"A", GCC:"A", GCA:"A", GCG:"A",
+  TAT:"Y", TAC:"Y", TAA:"*", TAG:"*",
+  CAT:"H", CAC:"H", CAA:"Q", CAG:"Q",
+  AAT:"N", AAC:"N", AAA:"K", AAG:"K",
+  GAT:"D", GAC:"D", GAA:"E", GAG:"E",
+  TGT:"C", TGC:"C", TGA:"*", TGG:"W",
+  CGT:"R", CGC:"R", CGA:"R", CGG:"R",
+  AGT:"S", AGC:"S", AGA:"R", AGG:"R",
+  GGT:"G", GGC:"G", GGA:"G", GGG:"G"
+};
+var AA_TO_CODONS = {};
+Object.keys(CODON_TABLE).forEach(function(codon){
+  var aa = CODON_TABLE[codon];
+  (AA_TO_CODONS[aa] = AA_TO_CODONS[aa] || []).push(codon);
+});
+
+var ECOLI_CODON = { A:"GCG", R:"CGC", N:"AAC", D:"GAT", C:"TGC", Q:"CAG", E:"GAA",
+  G:"GGC", H:"CAT", I:"ATT", L:"CTG", K:"AAA", M:"ATG", F:"TTT", P:"CCG",
+  S:"AGC", T:"ACC", W:"TGG", Y:"TAT", V:"GTG", "*":"TAA" };
+var HUMAN_CODON = { A:"GCC", R:"AGA", N:"AAC", D:"GAC", C:"TGC", Q:"CAG", E:"GAG",
+  G:"GGC", H:"CAC", I:"ATC", L:"CTG", K:"AAG", M:"ATG", F:"TTC", P:"CCC",
+  S:"AGC", T:"ACC", W:"TGG", Y:"TAC", V:"GTG", "*":"TGA" };
+
+var TAGS = {
+  his6tev: { label:"His6 + TEV", peptide:"MGSSHHHHHHSSGENLYFQG" },
+  his6:    { label:"His6",       peptide:"MGSSHHHHHHSSG" },
+  barem:   { label:"Bare Met",   peptide:"M" }
+};
+
+var ENZYMES = [
+  { name:"BsaI",   site:"GGTCTC",   group:"Golden Gate" },
+  { name:"BsmBI",  site:"CGTCTC",   group:"Golden Gate" },
+  { name:"SapI",   site:"GCTCTTC", group:"Golden Gate" },
+  { name:"EcoRI",  site:"GAATTC",   group:"Classic" },
+  { name:"BamHI",  site:"GGATCC",   group:"Classic" },
+  { name:"NdeI",   site:"CATATG",   group:"Classic" },
+  { name:"XhoI",   site:"CTCGAG",   group:"Classic" },
+  { name:"NotI",   site:"GCGGCCGC", group:"Classic" },
+  { name:"HindIII",site:"AAGCTT",   group:"Classic" },
+  { name:"NcoI",   site:"CCATGG",   group:"Classic" },
+  { name:"SalI",   site:"GTCGAC",   group:"Classic" }
+];
+
+var FEATURE_TYPES = { "Domain":1, "Repeat":1, "Region":1, "Motif":1 };
+
+function aa1to3(code){ return AA1_TO_3[code] || (code || "?"); }
+
+function reverseComplement(seq){
+  var comp = { A:"T", T:"A", C:"G", G:"C", N:"N", a:"t", t:"a", c:"g", g:"c", n:"n" };
+  var out = "";
+  for (var i = seq.length - 1; i >= 0; i--) out += comp[seq[i]] || "N";
+  return out;
+}
+
+function gcContent(seq){
+  if (!seq || !seq.length) return 0;
+  var n = 0;
+  for (var i = 0; i < seq.length; i++) { var c = seq[i].toUpperCase(); if (c === "G" || c === "C") n++; }
+  return (n / seq.length) * 100;
+}
+
+function wallaceTm(primer, mismatchCount){
+  var gc = gcContent(primer);
+  var len = primer.length;
+  var mismatchPct = (mismatchCount / len) * 100;
+  return 81.5 + 0.41 * gc - 675 / len - mismatchPct;
+}
+
+var NN_PARAMS = {
+  AA:[-7.9,-22.2], TT:[-7.9,-22.2],
+  AT:[-7.2,-20.4],
+  TA:[-7.2,-21.3],
+  CA:[-8.5,-22.7], TG:[-8.5,-22.7],
+  GT:[-8.4,-22.4], AC:[-8.4,-22.4],
+  CT:[-7.8,-21.0], AG:[-7.8,-21.0],
+  GA:[-8.2,-22.2], TC:[-8.2,-22.2],
+  CG:[-10.6,-27.2],
+  GC:[-9.8,-24.4],
+  GG:[-8.0,-19.9], CC:[-8.0,-19.9]
+};
+function nnTm(seqRaw, saltMM, concMolar){
+  var seq = (seqRaw || "").toUpperCase();
+  if (seq.length < 2) return NaN;
+  saltMM = saltMM == null ? 50 : saltMM;
+  concMolar = concMolar == null ? 0.25e-6 : concMolar;
+  var dH = 0, dS = 0;
+  for (var i = 0; i < seq.length - 1; i++) {
+    var pair = seq[i] + seq[i+1];
+    var p = NN_PARAMS[pair];
+    if (!p) continue;
+    dH += p[0]; dS += p[1];
+  }
+  function initTerm(base){
+    return (base === "G" || base === "C") ? [0.1, -2.8] : [2.3, 4.1];
+  }
+  var t1 = initTerm(seq[0]); dH += t1[0]; dS += t1[1];
+  var t2 = initTerm(seq[seq.length - 1]); dH += t2[0]; dS += t2[1];
+
+  var saltM = saltMM / 1000;
+  var dSsalt = dS + 0.368 * (seq.length - 1) * Math.log(saltM);
+  var R = 1.987;
+  var tmKelvin = (dH * 1000) / (dSsalt + R * Math.log(concMolar / 4));
+  return tmKelvin - 273.15;
+}
+
+function stripTranscriptPrefix(text){
+  return (text || "").trim().replace(/^[A-Za-z0-9_.]+:\s*/, "");
+}
+
+function parseVariant(raw){
+  var text = stripTranscriptPrefix(raw);
+  var m;
+
+  m = text.match(/^c\.(\d+)([ACGTacgt])>([ACGTacgt])$/);
+  if (m) {
+    var cPos = parseInt(m[1], 10);
+    var proteinPos = Math.floor((cPos - 1) / 3) + 1;
+    var codonOffset = (cPos - 1) % 3;
+    return { type:"c", cPos:cPos, refNt:m[2].toUpperCase(), altNt:m[3].toUpperCase(), proteinPos:proteinPos, codonOffset:codonOffset, raw:raw };
+  }
+
+  m = text.match(/^p\.\(?([A-Za-z]{3})(\d+)([A-Za-z]{3})\)?$/);
+  if (m) {
+    var r3 = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+    var a3 = m[3].charAt(0).toUpperCase() + m[3].slice(1).toLowerCase();
+    var refAA = AA3_TO_1[r3.toUpperCase()];
+    var altAA = AA3_TO_1[a3.toUpperCase()];
+    if (!refAA || !altAA) return { error:"Unrecognized three-letter residue code in \"" + raw + "\"." };
+    return { type:"p", proteinPos:parseInt(m[2], 10), refAA:refAA, altAA:altAA, raw:raw };
+  }
+
+  m = text.match(/^([A-Za-z])(\d+)([A-Za-z])$/);
+  if (m) {
+    var ref1 = m[1].toUpperCase(), alt1 = m[3].toUpperCase();
+    if (!AA1_TO_3[ref1] || !AA1_TO_3[alt1]) return { error:"Unrecognized one-letter residue code in \"" + raw + "\"." };
+    return { type:"short", proteinPos:parseInt(m[2], 10), refAA:ref1, altAA:alt1, raw:raw };
+  }
+
+  return { error:"Could not parse \"" + raw + "\" as c., p., or one-letter HGVS notation." };
+}
+
+// c. names a nucleotide change, not an amino acid. Enumerate every codon for the
+// reference residue carrying refNt at codonOffset, apply the substitution, and see
+// whether translation agrees — ambiguous whenever the real codon can't be inferred
+// from protein sequence alone.
+function inferAltFromC(refAA, codonOffset, refNt, altNt){
+  var codons = AA_TO_CODONS[refAA] || [];
+  var matching = codons.filter(function(c){ return c[codonOffset] === refNt; });
+  if (!matching.length) return { status:"none", matching:matching };
+  var results = matching.map(function(c){
+    var mutated = c.slice(0, codonOffset) + altNt + c.slice(codonOffset + 1);
+    return { codon:c, mutated:mutated, aa:CODON_TABLE[mutated] };
+  });
+  var uniqueAAs = [];
+  results.forEach(function(r){ if (uniqueAAs.indexOf(r.aa) === -1) uniqueAAs.push(r.aa); });
+  if (uniqueAAs.length === 1) return { status:"ok", aa:uniqueAAs[0], matching:matching, results:results };
+  return { status:"ambiguous", aas:uniqueAAs, matching:matching, results:results };
+}
+
+function smallestContainingFeature(features, pos){
+  var best = null;
+  (features || []).forEach(function(f){
+    if (pos >= f.start && pos <= f.end) {
+      if (!best || (f.end - f.start) < (best.end - best.start)) best = f;
+    }
+  });
+  return best;
+}
+
+function proposeWindow(strategy, proteinPos, features, seqLen){
+  var feats = features || [];
+  var containing = smallestContainingFeature(feats, proteinPos);
+  var repeats = feats.filter(function(f){ return f.type === "Repeat"; }).sort(function(a,b){ return a.start - b.start; });
+  var start, end;
+
+  if (strategy === "domain") {
+    if (containing) { start = containing.start - 5; end = containing.end + 5; }
+    else { start = proteinPos - 15; end = proteinPos + 15; }
+  } else {
+    // "repeat" strategy (default)
+    var idx = -1;
+    for (var i = 0; i < repeats.length; i++) {
+      if (proteinPos >= repeats[i].start && proteinPos <= repeats[i].end) { idx = i; break; }
+    }
+    if (idx >= 0) {
+      var beforeIdx = Math.max(0, idx - 1);
+      var afterIdx = Math.min(repeats.length - 1, idx + 1);
+      start = repeats[beforeIdx].start - 4;
+      end = repeats[afterIdx].end + 4;
+    } else if (repeats.length) {
+      var before = null, after = null;
+      repeats.forEach(function(r){
+        if (r.end < proteinPos && (!before || r.end > before.end)) before = r;
+        if (r.start > proteinPos && (!after || r.start < after.start)) after = r;
+      });
+      start = before ? before.start - 4 : (containing ? containing.start - 4 : proteinPos - 10);
+      end = after ? after.end + 4 : (containing ? containing.end + 4 : proteinPos + 10);
+    } else if (containing) {
+      start = containing.start - 4; end = containing.end + 4;
+    } else {
+      start = proteinPos - 20; end = proteinPos + 20;
+    }
+  }
+
+  start = Math.max(1, start);
+  end = Math.min(seqLen, end);
+  if (end < start) end = start;
+  return { start:start, end:end, containing:containing };
+}
+
+var MUT_ID_SEQ = 1;
+function buildMutationRows(refAA, altAA){
+  var rows = [];
+  function addRow(aa, role, isPatient){
+    if (!aa || aa === refAA) return;
+    if (rows.some(function(r){ return r.newAA === aa; })) return;
+    rows.push({ id:"m" + (MUT_ID_SEQ++), refAA:refAA, newAA:aa, role:role, enabled:true, patient: !!isPatient, custom:false });
+  }
+  addRow(altAA, "Patient variant", true);
+  addRow("A", "Alanine substitution: is the side chain required");
+  if (refAA === "R" || refAA === "K") {
+    addRow(refAA === "R" ? "K" : "R", "Conservative, charge preserved");
+    addRow("E", "Charge reversal, maximal disruption");
+    addRow("Q", "Isosteric, charge removed");
+  } else if (refAA === "D" || refAA === "E") {
+    addRow(refAA === "D" ? "E" : "D", "Conservative, charge preserved");
+    addRow("K", "Charge reversal, maximal disruption");
+    addRow("N", "Isosteric, charge removed");
+  } else {
+    addRow("G", "Helix destabilising control");
+    addRow("P", "Helix breaking control");
+  }
+  return rows;
+}
+
+function backtranslate(peptide, table){
+  var out = "";
+  for (var i = 0; i < peptide.length; i++) out += table[peptide[i]] || "NNN";
+  return out;
+}
+
+function scanSites(orfDna, enzymes){
+  var dna = orfDna.toUpperCase();
+  var hits = [];
+  (enzymes || ENZYMES).forEach(function(enz){
+    var rc = reverseComplement(enz.site);
+    findAll(dna, enz.site).forEach(function(pos){ hits.push({ enzyme:enz.name, site:enz.site, position:pos + 1, strand:"+" }); });
+    if (rc !== enz.site) {
+      findAll(dna, rc).forEach(function(pos){ hits.push({ enzyme:enz.name, site:enz.site, position:pos + 1, strand:"-" }); });
+    } else {
+      // palindromic: forward scan already covers both strands at the same coordinate.
+    }
+  });
+  hits.sort(function(a,b){ return a.position - b.position; });
+  return hits;
+}
+function findAll(haystack, needle){
+  var out = [], i = haystack.indexOf(needle);
+  while (i !== -1) { out.push(i); i = haystack.indexOf(needle, i + 1); }
+  return out;
+}
+
+function designMutagenicPrimer(orfDna, codonStartIdx, mutCodon){
+  var dna = orfDna.toUpperCase();
+  var wtCodon = dna.substr(codonStartIdx, 3);
+  var mutated = dna.slice(0, codonStartIdx) + mutCodon + dna.slice(codonStartIdx + 3);
+  var mismatchCount = 0;
+  for (var k = 0; k < 3; k++) if (wtCodon[k] !== mutCodon[k]) mismatchCount++;
+
+  var best = null, fallback = null;
+  for (var L = 10; L <= 22; L++) {
+    var start = codonStartIdx - L, end = codonStartIdx + 3 + L;
+    if (start < 0 || end > mutated.length) continue;
+    var primer = mutated.slice(start, end);
+    var tm = wallaceTm(primer, mismatchCount);
+    var gc = gcContent(primer);
+    var endsGC = /[GC]/.test(primer[0]) && /[GC]/.test(primer[primer.length - 1]);
+    var passes = tm >= 78 && gc >= 40 && endsGC;
+    var candidate = { length:L * 2 + 3, primer:primer, tm:tm, gc:gc, endsGC:endsGC, passes:passes, start:start, end:end };
+    if (passes) { best = candidate; break; }
+    if (!fallback || candidate.tm > fallback.tm) fallback = candidate;
+  }
+  var chosen = best || fallback;
+  if (!chosen) return null;
+  return {
+    forward: chosen.primer,
+    reverse: reverseComplement(chosen.primer),
+    tm: chosen.tm,
+    gc: chosen.gc,
+    length: chosen.primer.length,
+    passes: !!best,
+    wtCodon: wtCodon,
+    mutCodon: mutCodon
+  };
+}
+
+function gibsonArms(orfDna){
+  var dna = orfDna.toUpperCase();
+  var arm5 = dna.slice(0, Math.min(24, dna.length));
+  var tailRegion = dna.slice(Math.max(0, dna.length - 24));
+  var arm3 = reverseComplement(tailRegion);
+  return { arm5:arm5, arm3:arm3, tm5:nnTm(arm5), tm3:nnTm(arm3) };
+}
+
+function pad(str, width){ str = String(str); while (str.length < width) str += " "; return str; }
+function padLeft(str, width){ str = String(str); while (str.length < width) str = " " + str; return str; }
+
+function formatGenbankDate(d){
+  var months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return padLeft(d.getDate(), 2).replace(" ","0") + "-" + months[d.getMonth()] + "-" + d.getFullYear();
+}
+
+function wrapQualifier(key, value, quoted){
+  var indent = "                     ";
+  var first = indent + "/" + key + "=" + (quoted ? "\"" : "");
+  var width = 58;
+  var lines = [];
+  var remaining = value;
+  var firstLineWidth = width - (first.length - indent.length);
+  if (remaining.length <= firstLineWidth) {
+    lines.push(first + remaining + (quoted ? "\"" : ""));
+  } else {
+    lines.push(first + remaining.slice(0, firstLineWidth));
+    remaining = remaining.slice(firstLineWidth);
+    while (remaining.length > width) {
+      lines.push(indent + remaining.slice(0, width));
+      remaining = remaining.slice(width);
+    }
+    lines.push(indent + remaining + (quoted ? "\"" : ""));
+  }
+  return lines.join("\n");
+}
+
+function formatOrigin(dnaLower){
+  var lines = [];
+  for (var i = 0; i < dnaLower.length; i += 60) {
+    var lineSeq = dnaLower.slice(i, i + 60);
+    var groups = [];
+    for (var j = 0; j < lineSeq.length; j += 10) groups.push(lineSeq.slice(j, j + 10));
+    lines.push(padLeft(i + 1, 9) + " " + groups.join(" "));
+  }
+  return lines.join("\n");
+}
+
+function buildGenbank(ctx){
+  // ctx: { accession, geneName, proteinName, start, end, tagLabel, tagPeptide,
+  //        fragment, translation, orf, features, proteinPos, refAA, altAA }
+  var locusName = (ctx.geneName || ctx.accession).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) +
+                  "_" + ctx.start + "_" + ctx.end;
+  var length = ctx.orf.length;
+  var date = formatGenbankDate(new Date());
+
+  var lines = [];
+  lines.push("LOCUS       " + pad(locusName, 24) + padLeft(length, 6) + " bp ds-DNA     linear   SYN " + date);
+
+  var defText = ctx.geneName + " (UniProt " + ctx.accession + ") residues " + ctx.start + "-" + ctx.end +
+    " with N-terminal " + ctx.tagLabel + " tag; variant p." + aa1to3(ctx.refAA) + ctx.proteinPos + aa1to3(ctx.altAA || "?") + ".";
+  lines.push(wrapDefLine("DEFINITION  ", defText));
+  lines.push("ACCESSION   .");
+  lines.push("VERSION     .");
+  lines.push("KEYWORDS    .");
+  lines.push("SOURCE      synthetic construct");
+  lines.push("  ORGANISM  synthetic construct");
+  lines.push("FEATURES             Location/Qualifiers");
+  lines.push("     source          1.." + length);
+  lines.push("                     /organism=\"synthetic construct\"");
+  lines.push("                     /mol_type=\"other DNA\"");
+  lines.push("     CDS             1.." + length);
+  lines.push("                     /codon_start=1");
+  lines.push("                     /product=\"" + ctx.geneName + " fragment " + ctx.start + "-" + ctx.end + "\"");
+  lines.push(wrapQualifier("translation", ctx.translation, true));
+
+  var tagNt = ctx.tagPeptide.length * 3;
+  if (tagNt > 0) {
+    lines.push("     misc_feature    1.." + tagNt);
+    lines.push("                     /label=\"" + ctx.tagLabel + " tag\"");
+  }
+
+  (ctx.features || []).forEach(function(f){
+    var s = Math.max(f.start, ctx.start), e = Math.min(f.end, ctx.end);
+    if (s > e) return;
+    var ntStart = (ctx.tagPeptide.length + (s - ctx.start)) * 3 + 1;
+    var ntEnd = (ctx.tagPeptide.length + (e - ctx.start) + 1) * 3;
+    lines.push("     domain          " + ntStart + ".." + ntEnd);
+    lines.push("                     /label=\"" + (f.label || f.type) + "\"");
+  });
+
+  var variantNtStart = (ctx.tagPeptide.length + (ctx.proteinPos - ctx.start)) * 3 + 1;
+  var variantNtEnd = variantNtStart + 2;
+  lines.push("     variation       " + variantNtStart + ".." + variantNtEnd);
+  lines.push("                     /label=\"p." + aa1to3(ctx.refAA) + ctx.proteinPos + aa1to3(ctx.altAA || "?") + "\"");
+
+  lines.push("ORIGIN");
+  lines.push(formatOrigin(ctx.orf.toLowerCase()));
+  lines.push("//");
+  return lines.join("\n") + "\n";
+}
+function wrapDefLine(prefix, text){
+  var width = 79, indent = "            ";
+  var words = text.split(" ");
+  var lines = [], cur = prefix;
+  words.forEach(function(w){
+    if ((cur + w).length > width) { lines.push(cur.replace(/\s+$/,"")); cur = indent + w + " "; }
+    else cur += w + " ";
+  });
+  lines.push(cur.replace(/\s+$/,""));
+  return lines.join("\n");
+}
+
+function wrapSeq(seq, width){
+  var lines = [];
+  for (var i = 0; i < seq.length; i += width) lines.push(seq.slice(i, i + width));
+  return lines.join("\n");
+}
+
+function buildFasta(ctx){
+  var out = "";
+  out += ">" + ctx.accession + "_" + ctx.start + "-" + ctx.end + " " + ctx.geneName + " " + ctx.tagLabel + " protein construct\n";
+  out += wrapSeq(ctx.translation, 70) + "\n\n";
+  out += ">" + ctx.accession + "_" + ctx.start + "-" + ctx.end + " " + ctx.geneName + " ORF (" + ctx.codonTableLabel + " codon-optimized)\n";
+  out += wrapSeq(ctx.orf, 70) + "\n";
+  return out;
+}
+
+function csvEscape(v){
+  v = String(v);
+  if (/[",\n]/.test(v)) return "\"" + v.replace(/"/g, "\"\"") + "\"";
+  return v;
+}
+function buildOligoCsvRows(ctx){
+  var rows = [];
+  (ctx.mutations || []).filter(function(m){ return m.enabled; }).forEach(function(m){
+    var design = designMutagenicPrimer(ctx.orf, ctx.variantCodonStart, ctx.table[m.newAA] || "NNN");
+    if (!design) return;
+    var mutLabel = "p." + aa1to3(m.refAA) + ctx.proteinPos + aa1to3(m.newAA);
+    rows.push({
+      Name: ctx.geneName + "_" + ctx.proteinPos + m.refAA + m.newAA + "_F",
+      Mutation: mutLabel, Role: m.role, "From codon": design.wtCodon, "To codon": design.mutCodon,
+      Sequence: design.forward, Length: design.length, Tm: design.tm.toFixed(1), Scale:"25nm", Purification:"STD"
+    });
+    rows.push({
+      Name: ctx.geneName + "_" + ctx.proteinPos + m.refAA + m.newAA + "_R",
+      Mutation: mutLabel, Role: m.role, "From codon": design.wtCodon, "To codon": design.mutCodon,
+      Sequence: design.reverse, Length: design.length, Tm: design.tm.toFixed(1), Scale:"25nm", Purification:"STD"
+    });
+  });
+  var gibson = gibsonArms(ctx.orf);
+  rows.push({ Name: ctx.geneName + "_" + ctx.start + "-" + ctx.end + "_GibsonArm5", Mutation:"—", Role:"Gibson homology arm (5')",
+    "From codon":"—", "To codon":"—", Sequence: gibson.arm5, Length: gibson.arm5.length, Tm: gibson.tm5.toFixed(1), Scale:"25nm", Purification:"STD" });
+  rows.push({ Name: ctx.geneName + "_" + ctx.start + "-" + ctx.end + "_GibsonArm3", Mutation:"—", Role:"Gibson homology arm (3')",
+    "From codon":"—", "To codon":"—", Sequence: gibson.arm3, Length: gibson.arm3.length, Tm: gibson.tm3.toFixed(1), Scale:"25nm", Purification:"STD" });
+  return rows;
+}
+function rowsToCsv(rows, columns){
+  var out = columns.join(",") + "\n";
+  rows.forEach(function(r){ out += columns.map(function(c){ return csvEscape(r[c]); }).join(",") + "\n"; });
+  return out;
+}
+
+var CSV_COLUMNS = ["Name","Mutation","Role","From codon","To codon","Sequence","Length","Tm","Scale","Purification"];
+
+var SYNTHETIC_VCF = [
+  "##fileformat=VCFv4.2",
+  "##SYNTHETIC_DEMO_DATA=true",
+  "##INFO=<ID=HGVSc,Number=1,Type=String,Description=\"HGVS coding notation (SYNTHETIC demo data, not a real patient)\">",
+  "##INFO=<ID=GENE,Number=1,Type=String,Description=\"Gene symbol\">",
+  "##INFO=<ID=STATUS,Number=1,Type=String,Description=\"Inheritance status (synthetic)\">",
+  "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+  "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\tFATHER\tMOTHER",
+  "chr9\t131228125\t.\tA\tG\t.\tPASS\tHGVSc=NM_001130438.2:c.6958A>G;GENE=SPTAN1;STATUS=de_novo\tGT\t0/1\t0/0\t0/0"
+].join("\n") + "\n";
+
+function parseVcfHgvsc(vcfText){
+  var lines = (vcfText || "").split("\n");
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (!line || line.charAt(0) === "#") continue;
+    var cols = line.split("\t");
+    var info = cols[7] || "";
+    var fields = {};
+    info.split(";").forEach(function(kv){
+      var idx = kv.indexOf("=");
+      if (idx > -1) fields[kv.slice(0, idx)] = kv.slice(idx + 1);
+    });
+    if (fields.HGVSc) return { hgvsc: fields.HGVSc, status: fields.STATUS || null, gene: fields.GENE || null };
+  }
+  return null;
+}
+
+function parseFasta(text){
+  var lines = text.trim().split(/\r?\n/);
+  var header = "", seq = "";
+  lines.forEach(function(l){
+    if (l.charAt(0) === ">") header = l.slice(1).trim();
+    else seq += l.trim();
+  });
+  seq = seq.replace(/[^A-Za-z*]/g, "").toUpperCase();
+  var acc = (header.match(/\|([A-Z0-9]+)\|/) || [])[1] || (header.split(/\s+/)[0] || "OFFLINE");
+  var nameMatch = header.match(/\s(.+?)\sOS=/);
+  var geneMatch = header.match(/GN=(\S+)/);
+  return {
+    accession: acc,
+    name: nameMatch ? nameMatch[1] : header || "Offline target",
+    gene: geneMatch ? geneMatch[1] : acc,
+    sequence: seq,
+    features: []
+  };
+}
+
+/* ====================== expose pure functions for tests ====================== */
+var MR_EXPORTS = {
+  AA1_TO_3: AA1_TO_3, AA3_TO_1: AA3_TO_1, CODON_TABLE: CODON_TABLE, AA_TO_CODONS: AA_TO_CODONS,
+  ECOLI_CODON: ECOLI_CODON, HUMAN_CODON: HUMAN_CODON, TAGS: TAGS, ENZYMES: ENZYMES,
+  aa1to3: aa1to3, reverseComplement: reverseComplement, gcContent: gcContent, wallaceTm: wallaceTm,
+  nnTm: nnTm, parseVariant: parseVariant, inferAltFromC: inferAltFromC, proposeWindow: proposeWindow,
+  smallestContainingFeature: smallestContainingFeature, buildMutationRows: buildMutationRows,
+  backtranslate: backtranslate, scanSites: scanSites, designMutagenicPrimer: designMutagenicPrimer,
+  gibsonArms: gibsonArms, buildGenbank: buildGenbank, buildFasta: buildFasta, buildOligoCsvRows: buildOligoCsvRows,
+  rowsToCsv: rowsToCsv, CSV_COLUMNS: CSV_COLUMNS, parseVcfHgvsc: parseVcfHgvsc, parseFasta: parseFasta,
+  SYNTHETIC_VCF: SYNTHETIC_VCF, formatOrigin: formatOrigin, wrapQualifier: wrapQualifier, stripTranscriptPrefix: stripTranscriptPrefix
+};
+if (typeof globalThis !== "undefined") globalThis.__MR__ = MR_EXPORTS;
+
+/* ======================================================================
+   DOM / APP WIRING — runs only when a document is present.
+   ====================================================================== */
+if (typeof document === "undefined") return;
+
+var state = {
+  accession: null, proteinName: null, geneName: null, sequence: null, features: [],
+  usingCache: false, variant: null, proteinPos: null, refAA: null, altAA: null,
+  altCandidates: null, hardFail: true, window: null, windowStrategy: "repeat",
+  mutations: [], built: null
+};
+
+var els = {};
+["accessionInput","resolveBtn","resolveChip","resolveNote","exportFixtureBtn","offlinePaste","loadOfflineBtn",
+ "variantInput","validateBtn","variantChip","loadVcfBtn","vcfNote",
+ "windowStrategy","windowStart","windowEnd","windowNote",
+ "tagSelect","codonSelect","buildBtn",
+ "checklistBody","checklistChip","ambiguousResolver",
+ "domainMapHost","domainLegend",
+ "structureViewer","structureChip",
+ "mutRows","addMutRow","addMutSelect","addMutBtn",
+ "outputsEmpty","outputsBody","genbankText","fastaText","csvTable",
+ "copyGenbank","downloadGenbank","copyCsv","downloadCsv","copyFasta","downloadFasta",
+ "themeToggle"
+].forEach(function(id){ els[id] = document.getElementById(id); });
+
+/* ---------------- theme ---------------- */
+function applyTheme(mode){
+  if (mode === "light" || mode === "dark") {
+    document.documentElement.setAttribute("data-theme", mode);
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  els.themeToggle.textContent = "Theme: " + (mode ? (mode.charAt(0).toUpperCase() + mode.slice(1)) : "Auto");
+  renderDomainMap();
+}
+(function initTheme(){
+  var saved = null;
+  try { saved = localStorage.getItem("mr:theme"); } catch (e) {}
+  applyTheme(saved);
+})();
+els.themeToggle.addEventListener("click", function(){
+  var current = document.documentElement.getAttribute("data-theme");
+  var next = current === "dark" ? "light" : (current === "light" ? null : "dark");
+  try { if (next) localStorage.setItem("mr:theme", next); else localStorage.removeItem("mr:theme"); } catch (e) {}
+  applyTheme(next);
+});
+
+/* ---------------- chips ---------------- */
+function setChip(el, status, text){
+  el.className = "chip " + status;
+  el.textContent = text;
+}
+
+/* ---------------- resolve target ---------------- */
+function cacheTarget(acc, data){
+  try { localStorage.setItem("mr:" + acc, JSON.stringify(data)); } catch (e) {}
+}
+function readCache(acc){
+  try { var raw = localStorage.getItem("mr:" + acc); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+}
+
+function extractFeatures(json){
+  return (json.features || [])
+    .filter(function(f){ return FEATURE_TYPES[f.type]; })
+    .map(function(f){
+      var start = f.location && f.location.start && f.location.start.value;
+      var end = f.location && f.location.end && f.location.end.value;
+      return { type: f.type, label: f.description || f.type, start: start, end: end };
+    })
+    .filter(function(f){ return f.start && f.end; })
+    .sort(function(a,b){ return a.start - b.start; });
+}
+
+function applyResolvedData(data, fromCache){
+  state.accession = data.accession;
+  state.proteinName = data.name;
+  state.geneName = data.gene;
+  state.sequence = data.sequence;
+  state.features = data.features || [];
+  state.usingCache = !!fromCache;
+  els.exportFixtureBtn.disabled = false;
+  setChip(els.resolveChip, "pass", fromCache ? "From cache" : "Resolved");
+  els.resolveNote.textContent = (fromCache ? "Loaded from local cache (" + data.sequence.length + " aa). " : "") +
+    state.proteinName + " — " + state.geneName + " — " + state.sequence.length + " aa.";
+  runValidation();
+}
+
+function fetchUniprot(acc){
+  setChip(els.resolveChip, "idle", "Resolving…");
+  var url = "https://rest.uniprot.org/uniprotkb/" + encodeURIComponent(acc) + ".json";
+  fetch(url).then(function(resp){
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    return resp.json();
+  }).then(function(json){
+    var fullName = (json.proteinDescription && json.proteinDescription.recommendedName &&
+      json.proteinDescription.recommendedName.fullName && json.proteinDescription.recommendedName.fullName.value) || acc;
+    var gene = (json.genes && json.genes[0] && json.genes[0].geneName && json.genes[0].geneName.value) || acc;
+    var sequence = json.sequence && json.sequence.value;
+    if (!sequence) throw new Error("No sequence in response");
+    var data = { accession: json.primaryAccession || acc, name: fullName, gene: gene, sequence: sequence, features: extractFeatures(json) };
+    cacheTarget(data.accession, data);
+    applyResolvedData(data, false);
+  }).catch(function(err){
+    var cached = readCache(acc);
+    if (cached) {
+      applyResolvedData(cached, true);
+    } else {
+      setChip(els.resolveChip, "fail", "Fetch failed");
+      els.resolveNote.textContent = "Could not reach UniProt (" + err.message + ") and no cached copy exists. Use the offline input below.";
+    }
+  });
+}
+els.resolveBtn.addEventListener("click", function(){ fetchUniprot(els.accessionInput.value.trim()); });
+
+els.loadOfflineBtn.addEventListener("click", function(){
+  var text = els.offlinePaste.value.trim();
+  if (!text) return;
+  var data;
+  try {
+    var json = JSON.parse(text);
+    data = { accession: json.accession, name: json.name, gene: json.gene, sequence: json.sequence, features: json.features || [] };
+  } catch (e) {
+    data = MR_EXPORTS.parseFasta(text);
+  }
+  if (!data.sequence) { setChip(els.resolveChip, "fail", "Bad input"); return; }
+  els.accessionInput.value = data.accession || "OFFLINE";
+  cacheTarget(data.accession || "OFFLINE", data);
+  applyResolvedData(data, true);
+});
+
+els.exportFixtureBtn.addEventListener("click", function(){
+  var fixture = { accession: state.accession, name: state.proteinName, gene: state.geneName, sequence: state.sequence, features: state.features };
+  downloadText(state.accession + "_fixture.json", JSON.stringify(fixture, null, 2));
+});
+
+/* ---------------- VCF demo path ---------------- */
+els.loadVcfBtn.addEventListener("click", function(){
+  var parsed = MR_EXPORTS.parseVcfHgvsc(MR_EXPORTS.SYNTHETIC_VCF);
+  if (!parsed) return;
+  els.variantInput.value = parsed.hgvsc;
+  els.vcfNote.textContent = "SYNTHETIC demo trio VCF loaded. Parsed HGVSc=\"" + parsed.hgvsc + "\" directly from INFO (no liftover performed). Status: " + parsed.status + ".";
+  runValidation();
+});
+
+/* ---------------- validation ---------------- */
+els.validateBtn.addEventListener("click", function(){
+  if (!state.sequence) { fetchUniprotThenValidate(); } else { runValidation(); }
+});
+function fetchUniprotThenValidate(){
+  var acc = els.accessionInput.value.trim();
+  setChip(els.resolveChip, "idle", "Resolving…");
+  fetchUniprot(acc);
+}
+
+function renderChecklist(items, overallStatus){
+  els.checklistBody.innerHTML = "";
+  els.checklistBody.className = "";
+  var ul = document.createElement("ul");
+  ul.className = "checklist";
+  items.forEach(function(item){
+    var li = document.createElement("li");
+    li.className = item.status;
+    var label = document.createElement("span");
+    label.className = "l";
+    label.textContent = item.status;
+    li.appendChild(label);
+    li.appendChild(document.createTextNode(item.text));
+    if (item.reasoning) {
+      var r = document.createElement("span");
+      r.className = "reasoning";
+      r.textContent = item.reasoning;
+      li.appendChild(r);
+    }
+    ul.appendChild(li);
+  });
+  els.checklistBody.appendChild(ul);
+  setChip(els.checklistChip, overallStatus, overallStatus === "fail" ? "Failed" : (overallStatus === "warn" ? "Passed with warnings" : "Passed"));
+}
+
+function runValidation(){
+  if (!state.sequence) return;
+  var parsed = parseVariant(els.variantInput.value);
+  var checklist = [];
+  var hardFail = false;
+  var proteinPos = null, refAA = null, altAA = null, altCandidates = null;
+
+  checklist.push({ status:"pass", text:"Accession " + state.accession + " retrieved — " + state.sequence.length + " aa." + (state.usingCache ? " (served from local cache)" : "") });
+
+  if (parsed.error) {
+    checklist.push({ status:"fail", text: parsed.error });
+    hardFail = true;
+  } else {
+    proteinPos = parsed.proteinPos;
+    if (parsed.type === "c") {
+      checklist.push({ status:"pass", text:"c." + parsed.cPos + " maps to residue " + proteinPos + ", codon position " + (parsed.codonOffset + 1) + " of 3." });
+    } else {
+      checklist.push({ status:"pass", text: (parsed.type === "p" ? "p." : "Shorthand") + " variant targets residue " + proteinPos + " directly." });
+    }
+
+    if (proteinPos < 1 || proteinPos > state.sequence.length) {
+      checklist.push({ status:"fail", text:"Residue " + proteinPos + " is outside the retrieved sequence (length " + state.sequence.length + "). Numbering is off — check the transcript/isoform used for this report." });
+      hardFail = true;
+    } else {
+      var actualRef = state.sequence[proteinPos - 1];
+      checklist.push({ status:"pass", text:"Residue " + proteinPos + " in the retrieved sequence is " + aa1to3(actualRef) + " (" + actualRef + ")." });
+
+      if (parsed.type === "c") {
+        var inf = inferAltFromC(actualRef, parsed.codonOffset, parsed.refNt, parsed.altNt);
+        if (inf.status === "none") {
+          checklist.push({ status:"fail", text:"No " + aa1to3(actualRef) + " codon carries " + parsed.refNt + " at position " + (parsed.codonOffset+1) + " — the coordinate and the sequence disagree. Check the transcript used for this report." });
+          hardFail = true;
+        } else if (inf.status === "ok") {
+          refAA = actualRef; altAA = inf.aa;
+          checklist.push({ status:"pass", text:"Protein change inferred as p." + aa1to3(refAA) + proteinPos + aa1to3(altAA) + ".",
+            reasoning: aa1to3(refAA) + " codons carrying " + parsed.refNt + " at position " + (parsed.codonOffset+1) + " are " + inf.matching.join(", ") + ". Applying " + parsed.refNt + ">" + parsed.altNt + " gives " + aa1to3(altAA) + " in every case." });
+        } else {
+          refAA = actualRef; altCandidates = inf.aas;
+          checklist.push({ status:"warn", text:"Protein change is ambiguous from c. notation alone — candidates: " + inf.aas.map(aa1to3).join(", ") + ". Pick the correct one below once the real transcript is confirmed.",
+            reasoning: aa1to3(refAA) + " codons carrying " + parsed.refNt + " at position " + (parsed.codonOffset+1) + " are " + inf.matching.join(", ") + "; applying " + parsed.refNt + ">" + parsed.altNt + " gives " + inf.aas.map(aa1to3).join(", ") + " depending on the actual codon used." });
+        }
+      } else {
+        refAA = parsed.refAA; altAA = parsed.altAA;
+        if (actualRef !== refAA) {
+          checklist.push({ status:"fail", text:"Isoform mismatch: variant expects " + aa1to3(refAA) + " at " + proteinPos + ", sequence has " + aa1to3(actualRef) + ". Numbering is off, so every downstream coordinate would be wrong — check the transcript/isoform used for this report." });
+          hardFail = true;
+        } else {
+          checklist.push({ status:"pass", text:"Matches the variant's expected reference residue." });
+        }
+      }
+
+      if (!hardFail) {
+        var containing = smallestContainingFeature(state.features, proteinPos);
+        if (containing) checklist.push({ status:"pass", text:"Residue " + proteinPos + " falls within " + containing.label + " (" + containing.start + "–" + containing.end + ")." });
+        else checklist.push({ status:"warn", text:"No annotated domain, repeat, region or motif covers residue " + proteinPos + "." });
+      }
+    }
+
+    if (state.sequence.length > 1400) {
+      checklist.push({ status:"warn", text:"Protein is " + state.sequence.length + " aa, exceeding the ~1400-residue context limit of most structure and binding models. Trimming to a domain (proposed below) is what makes it tractable." });
+    }
+  }
+
+  state.hardFail = hardFail;
+  state.proteinPos = proteinPos;
+  state.refAA = refAA;
+  state.altAA = altAA;
+  state.altCandidates = altCandidates;
+
+  var overall = hardFail ? "fail" : (checklist.some(function(c){ return c.status === "warn"; }) ? "warn" : "pass");
+  renderChecklist(checklist, overall);
+  setChip(els.variantChip, overall, overall === "fail" ? "Invalid" : "Resolved");
+
+  renderAmbiguousResolver();
+
+  if (hardFail || altAA == null) {
+    disableDownstream();
+    renderDomainMap();
+    return;
+  }
+
+  proceedAfterValidation();
+}
+
+function renderAmbiguousResolver(){
+  els.ambiguousResolver.innerHTML = "";
+  els.ambiguousResolver.style.display = "none";
+  if (!state.altCandidates || state.hardFail) return;
+  els.ambiguousResolver.style.display = "block";
+  var wrap = document.createElement("div");
+  wrap.className = "inline-note";
+  wrap.style.marginTop = ".5rem";
+  var label = document.createElement("label");
+  label.textContent = "Resolve the actual protein change manually:";
+  label.style.marginBottom = ".3rem";
+  var sel = document.createElement("select");
+  var blank = document.createElement("option"); blank.value = ""; blank.textContent = "Select…";
+  sel.appendChild(blank);
+  state.altCandidates.forEach(function(aa){
+    var o = document.createElement("option"); o.value = aa; o.textContent = aa1to3(aa) + " (" + aa + ")"; sel.appendChild(o);
+  });
+  sel.addEventListener("change", function(){
+    if (!sel.value) return;
+    state.altAA = sel.value;
+    state.hardFail = false;
+    setChip(els.variantChip, "warn", "Resolved manually");
+    proceedAfterValidation();
+  });
+  wrap.appendChild(label); wrap.appendChild(sel);
+  els.ambiguousResolver.appendChild(wrap);
+}
+
+function disableDownstream(){
+  els.buildBtn.disabled = true;
+  els.windowNote.textContent = "Resolve a target and a valid variant to propose a window.";
+  els.mutRows.innerHTML = '<p class="empty-state">Mechanism-control mutations are proposed here once validation passes.</p>';
+  els.addMutRow.style.display = "none";
+  els.outputsEmpty.style.display = "block";
+  els.outputsBody.style.display = "none";
+  setChip(els.structureChip, "idle", "Idle");
+}
+
+function proceedAfterValidation(){
+  var proposal = proposeWindow(state.windowStrategy, state.proteinPos, state.features, state.sequence.length);
+  state.window = { start: proposal.start, end: proposal.end };
+  els.windowStart.value = proposal.start;
+  els.windowEnd.value = proposal.end;
+  els.windowNote.textContent = "Window spans " + proposal.start + "–" + proposal.end + " (" + (proposal.end - proposal.start + 1) + " aa). Never bisects an annotated domain under the repeat/domain strategies.";
+
+  state.mutations = buildMutationRows(state.refAA, state.altAA);
+  renderMutationPanel();
+  renderDomainMap();
+  els.buildBtn.disabled = false;
+  loadStructure();
+}
+
+/* ---------------- window strategy ---------------- */
+els.windowStrategy.addEventListener("change", function(){
+  state.windowStrategy = els.windowStrategy.value;
+  if (!state.sequence || state.hardFail || state.proteinPos == null) return;
+  if (state.windowStrategy === "manual") return;
+  var proposal = proposeWindow(state.windowStrategy, state.proteinPos, state.features, state.sequence.length);
+  state.window = { start: proposal.start, end: proposal.end };
+  els.windowStart.value = proposal.start;
+  els.windowEnd.value = proposal.end;
+  renderDomainMap();
+});
+function manualEdit(){
+  if (els.windowStrategy.value !== "manual") {
+    els.windowStrategy.value = "manual";
+    state.windowStrategy = "manual";
+  }
+  var s = parseInt(els.windowStart.value, 10), e = parseInt(els.windowEnd.value, 10);
+  if (!isNaN(s) && !isNaN(e) && e >= s) {
+    state.window = { start: s, end: e };
+    renderDomainMap();
+  }
+}
+els.windowStart.addEventListener("input", manualEdit);
+els.windowEnd.addEventListener("input", manualEdit);
+
+/* ---------------- mutagenesis panel ---------------- */
+function renderMutationPanel(){
+  els.mutRows.innerHTML = "";
+  state.mutations.forEach(function(m){
+    var row = document.createElement("div");
+    row.className = "mutrow" + (m.patient ? " locked" : "");
+    var cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = m.enabled; cb.setAttribute("aria-label", "Include " + m.refAA + state.proteinPos + m.newAA);
+    cb.addEventListener("change", function(){ m.enabled = cb.checked; });
+    var target = document.createElement("span");
+    target.className = "target";
+    target.textContent = m.refAA + state.proteinPos + m.newAA;
+    var role = document.createElement("span");
+    role.className = "role";
+    role.textContent = m.role;
+    var spacer = document.createElement("span");
+    row.appendChild(cb); row.appendChild(target); row.appendChild(role); row.appendChild(spacer);
+    els.mutRows.appendChild(row);
+  });
+  els.addMutRow.style.display = "flex";
+  els.addMutSelect.innerHTML = "";
+  Object.keys(AA1_TO_3).filter(function(a){ return a !== "*"; }).forEach(function(a){
+    if (a === state.refAA) return;
+    if (state.mutations.some(function(m){ return m.newAA === a; })) return;
+    var o = document.createElement("option"); o.value = a; o.textContent = aa1to3(a) + " (" + a + ")";
+    els.addMutSelect.appendChild(o);
+  });
+}
+els.addMutBtn.addEventListener("click", function(){
+  var aa = els.addMutSelect.value;
+  if (!aa) return;
+  state.mutations.push({ id:"custom" + Date.now(), refAA: state.refAA, newAA: aa, role: "Custom", enabled:true, patient:false, custom:true });
+  renderMutationPanel();
+});
+
+/* ---------------- domain map (SVG) ---------------- */
+function renderDomainMap(){
+  if (!state.sequence) return;
+  var cs = getComputedStyle(document.documentElement);
+  var tok = function(name){ return cs.getPropertyValue(name).trim(); };
+  var colors = {
+    track: tok("--track-bg"), repeat: tok("--repeat-color"), domain: tok("--domain-color"),
+    pin: tok("--pin-color"), tick: tok("--tick-color"), fg: tok("--fg"), accent: tok("--accent"), fgMuted: tok("--fg-muted")
+  };
+  var len = state.sequence.length;
+  var minWidth = Math.max(900, len * 0.6);
+  var width = minWidth, height = 150, trackY = 70, trackH = 20;
+  var padX = 20;
+  function xOf(pos){ return padX + ((pos - 1) / (len - 1 || 1)) * (width - padX * 2); }
+
+  var svg = ['<svg viewBox="0 0 ' + width + ' ' + height + '" width="' + width + '" height="' + height + '" role="img" aria-label="Domain map">'];
+  svg.push('<rect x="' + padX + '" y="' + trackY + '" width="' + (width - padX*2) + '" height="' + trackH + '" fill="' + colors.track + '"></rect>');
+
+  if (state.window) {
+    var bx1 = xOf(state.window.start), bx2 = xOf(state.window.end);
+    svg.push('<rect x="' + bx1 + '" y="' + (trackY - 14) + '" width="' + (bx2 - bx1) + '" height="' + (trackH + 28) + '" fill="' + colors.accent + '" opacity="0.18"><title>Construct window ' + state.window.start + '–' + state.window.end + '</title></rect>');
+  }
+
+  (state.features || []).forEach(function(f){
+    var x1 = xOf(f.start), x2 = xOf(f.end);
+    var color = f.type === "Repeat" ? colors.repeat : colors.domain;
+    svg.push('<rect x="' + x1 + '" y="' + trackY + '" width="' + Math.max(1, x2 - x1) + '" height="' + trackH + '" fill="' + color + '" stroke="' + colors.track + '" stroke-width="0.5"><title>' + escapeXml(f.label + " (" + f.start + "–" + f.end + ")") + '</title></rect>');
+  });
+
+  var tickStep = len > 2000 ? 200 : (len > 800 ? 100 : 50);
+  for (var p = tickStep; p < len; p += tickStep) {
+    var tx = xOf(p);
+    svg.push('<line x1="' + tx + '" y1="' + (trackY + trackH) + '" x2="' + tx + '" y2="' + (trackY + trackH + 6) + '" stroke="' + colors.tick + '"></line>');
+    svg.push('<text x="' + tx + '" y="' + (trackY + trackH + 18) + '" font-size="9" text-anchor="middle" fill="' + colors.fgMuted + '" font-family="var(--font-mono)">' + p + '</text>');
+  }
+  svg.push('<text x="' + padX + '" y="' + (trackY + trackH + 18) + '" font-size="9" text-anchor="start" fill="' + colors.fgMuted + '">1</text>');
+  svg.push('<text x="' + (width - padX) + '" y="' + (trackY + trackH + 18) + '" font-size="9" text-anchor="end" fill="' + colors.fgMuted + '">' + len + '</text>');
+
+  if (state.proteinPos) {
+    var px = xOf(state.proteinPos);
+    svg.push('<line x1="' + px + '" y1="24" x2="' + px + '" y2="' + trackY + '" stroke="' + colors.pin + '" stroke-width="1.5"></line>');
+    svg.push('<circle cx="' + px + '" cy="20" r="4" fill="' + colors.pin + '"></circle>');
+    var variantLabel = (state.refAA || "?") + state.proteinPos + (state.altAA || "?");
+    svg.push('<text x="' + px + '" y="12" font-size="10" text-anchor="middle" fill="' + colors.pin + '" font-weight="600">' + escapeXml(variantLabel) + '</text>');
+  }
+
+  svg.push("</svg>");
+  els.domainMapHost.innerHTML = svg.join("");
+
+  els.domainLegend.innerHTML =
+    '<span><span class="sw" style="background:' + colors.repeat + '"></span>Repeat</span>' +
+    '<span><span class="sw" style="background:' + colors.domain + '"></span>Domain / Region / Motif</span>' +
+    '<span><span class="sw" style="background:' + colors.accent + ';opacity:.5"></span>Construct window</span>' +
+    '<span><span class="sw" style="background:' + colors.pin + '"></span>Variant</span>';
+}
+function escapeXml(s){ return String(s).replace(/[<>&"]/g, function(c){ return ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"})[c]; }); }
+
+window.addEventListener("resize", function(){ /* SVG uses viewBox; no re-render needed */ });
+
+/* ---------------- 3Dmol structure viewer ---------------- */
+function loadStructure(){
+  setChip(els.structureChip, "idle", "Loading…");
+  els.structureViewer.innerHTML = "";
+  if (typeof $3Dmol === "undefined") {
+    setChip(els.structureChip, "warn", "Viewer unavailable");
+    els.structureViewer.innerHTML = '<p class="empty-state" style="padding:1rem;">3Dmol.js did not load (offline). Only this panel needs network — everything else still works.</p>';
+    return;
+  }
+  var viewer = $3Dmol.createViewer(els.structureViewer, { backgroundColor: "white" });
+  var url = "https://alphafold.ebi.ac.uk/files/AF-" + state.accession + "-F1-model_v4.pdb";
+  fetch(url).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(function(pdb){
+      viewer.addModel(pdb, "pdb");
+      viewer.setStyle({}, { cartoon: { color: "grey", opacity: 0.45 } });
+      if (state.window) {
+        viewer.setStyle({ resi: state.window.start + "-" + state.window.end }, { cartoon: { color: "teal" } });
+      }
+      if (state.proteinPos) {
+        viewer.setStyle({ resi: state.proteinPos }, { stick: { colorscheme: "red" }, sphere: { scale: 0.4, colorscheme: "red" } });
+      }
+      viewer.zoomTo(state.window ? { resi: state.window.start + "-" + state.window.end } : {});
+      viewer.render();
+      setChip(els.structureChip, "pass", "AlphaFold DB model");
+    })
+    .catch(function(){
+      setChip(els.structureChip, "warn", "Unavailable offline");
+      els.structureViewer.innerHTML = '<p class="empty-state" style="padding:1rem;">Could not reach the AlphaFold database. Only this panel needs network — the rest of the target stays usable from cache.</p>';
+    });
+}
+
+/* ---------------- build ---------------- */
+els.buildBtn.addEventListener("click", buildConstruct);
+function buildConstruct(){
+  var start = parseInt(els.windowStart.value, 10), end = parseInt(els.windowEnd.value, 10);
+  if (isNaN(start) || isNaN(end) || end < start) return;
+  state.window = { start: start, end: end };
+
+  var tagKey = els.tagSelect.value;
+  var tag = TAGS[tagKey];
+  var codonKey = els.codonSelect.value;
+  var table = codonKey === "human" ? HUMAN_CODON : ECOLI_CODON;
+  var tableLabel = codonKey === "human" ? "Human" : "E. coli K-12";
+
+  var fragment = state.sequence.slice(start - 1, end);
+  var translation = tag.peptide + fragment;
+  var orf = backtranslate(tag.peptide, table) + backtranslate(fragment, table) + table["*"];
+
+  var variantCodonStart = (tag.peptide.length + (state.proteinPos - start)) * 3;
+
+  var ctx = {
+    accession: state.accession, geneName: state.geneName, proteinName: state.proteinName,
+    start: start, end: end, tagLabel: tag.label, tagPeptide: tag.peptide, fragment: fragment,
+    translation: translation, orf: orf, features: state.features, proteinPos: state.proteinPos,
+    refAA: state.refAA, altAA: state.altAA, mutations: state.mutations, table: table,
+    codonTableLabel: tableLabel, variantCodonStart: variantCodonStart
+  };
+  state.built = ctx;
+
+  renderSiteScan(orf);
+  renderPrimersAndGibson(ctx);
+  renderGenbank(ctx);
+  renderCsv(ctx);
+  renderFasta(ctx);
+
+  els.outputsEmpty.style.display = "none";
+  els.outputsBody.style.display = "block";
+}
+
+function renderSiteScan(orf){
+  var hits = scanSites(orf, ENZYMES);
+  var pane = document.getElementById("pane-sitescan");
+  if (!hits.length) {
+    pane.innerHTML = '<p class="inline-note">Clean — no Golden Gate (BsaI/BsmBI/SapI) or classic cloning sites found in ' + Math.floor(orf.length/3) + ' codons (' + orf.length + ' bp).</p>';
+    return;
+  }
+  var rows = hits.map(function(h){ return "<tr><td>" + h.enzyme + "</td><td class=\"seq\">" + h.site + "</td><td>" + h.position + "</td><td>" + h.strand + "</td></tr>"; }).join("");
+  pane.innerHTML = '<div class="scrollx"><table><tr><th>Enzyme</th><th>Site</th><th>Position (nt)</th><th>Strand</th></tr>' + rows + '</table></div>';
+}
+
+function renderPrimersAndGibson(ctx){
+  var pane = document.getElementById("pane-primers");
+  var rowsHtml = (ctx.mutations || []).filter(function(m){ return m.enabled; }).map(function(m){
+    var design = designMutagenicPrimer(ctx.orf, ctx.variantCodonStart, ctx.table[m.newAA] || "NNN");
+    if (!design) return "";
+    return "<tr><td>" + m.refAA + ctx.proteinPos + m.newAA + "</td><td>" + m.role + "</td>" +
+      "<td class=\"seq\">" + design.forward + "</td><td class=\"seq\">" + design.reverse + "</td>" +
+      "<td>" + design.tm.toFixed(1) + "</td><td>" + design.length + "</td><td>" + (design.passes ? "✓" : "best-effort") + "</td></tr>";
+  }).join("");
+  var gibson = gibsonArms(ctx.orf);
+  pane.innerHTML =
+    "<h4 style=\"margin:.2rem 0; font-size:.8rem;\">Mutagenic primers (QuikChange-style)</h4>" +
+    '<div class="scrollx"><table><tr><th>Mutation</th><th>Role</th><th>Forward</th><th>Reverse complement</th><th>Tm (°C)</th><th>Length</th><th>Meets Tm≥78 &amp; GC targets</th></tr>' + rowsHtml + "</table></div>" +
+    "<h4 style=\"margin:.6rem 0 .2rem; font-size:.8rem;\">Gibson homology arms</h4>" +
+    '<div class="scrollx"><table><tr><th>Arm</th><th>Sequence</th><th>Tm (°C, NN SantaLucia)</th></tr>' +
+    "<tr><td>5′ (first 24 bp)</td><td class=\"seq\">" + gibson.arm5 + "</td><td>" + gibson.tm5.toFixed(1) + "</td></tr>" +
+    "<tr><td>3′ (revcomp of last 24 bp)</td><td class=\"seq\">" + gibson.arm3 + "</td><td>" + gibson.tm3.toFixed(1) + "</td></tr>" +
+    "</table></div>";
+}
+
+function renderGenbank(ctx){
+  var gb = buildGenbank(ctx);
+  state.built.genbank = gb;
+  els.genbankText.textContent = gb;
+}
+function renderCsv(ctx){
+  var rows = buildOligoCsvRows(ctx);
+  state.built.csvRows = rows;
+  var csv = rowsToCsv(rows, CSV_COLUMNS);
+  state.built.csv = csv;
+  var html = "<tr>" + CSV_COLUMNS.map(function(c){ return "<th>" + c + "</th>"; }).join("") + "</tr>";
+  rows.forEach(function(r){ html += "<tr>" + CSV_COLUMNS.map(function(c){ return "<td class=\"" + (c === "Sequence" ? "seq" : "") + "\">" + r[c] + "</td>"; }).join("") + "</tr>"; });
+  els.csvTable.innerHTML = html;
+}
+function renderFasta(ctx){
+  var fasta = buildFasta(ctx);
+  state.built.fasta = fasta;
+  els.fastaText.textContent = fasta;
+}
+
+/* ---------------- output tabs / copy / download ---------------- */
+document.querySelectorAll(".outputs-tabs [role=tab]").forEach(function(tab){
+  tab.addEventListener("click", function(){
+    document.querySelectorAll(".outputs-tabs [role=tab]").forEach(function(t){ t.setAttribute("aria-selected", "false"); });
+    document.querySelectorAll(".output-pane").forEach(function(p){ p.classList.remove("active"); });
+    tab.setAttribute("aria-selected", "true");
+    document.getElementById("pane-" + tab.dataset.pane).classList.add("active");
+  });
+});
+
+function downloadText(filename, text){
+  var blob = new Blob([text], { type: "text/plain" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+function copyText(text){
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function(){});
+}
+
+els.copyGenbank.addEventListener("click", function(){ if (state.built) copyText(state.built.genbank); });
+els.downloadGenbank.addEventListener("click", function(){ if (state.built) downloadText(state.built.accession + "_" + state.built.start + "_" + state.built.end + ".gb", state.built.genbank); });
+els.copyCsv.addEventListener("click", function(){ if (state.built) copyText(state.built.csv); });
+els.downloadCsv.addEventListener("click", function(){ if (state.built) downloadText(state.built.accession + "_oligos.csv", state.built.csv); });
+els.copyFasta.addEventListener("click", function(){ if (state.built) copyText(state.built.fasta); });
+els.downloadFasta.addEventListener("click", function(){ if (state.built) downloadText(state.built.accession + "_construct.fasta", state.built.fasta); });
+
+/* ---------------- boot ---------------- */
+disableDownstream();
+fetchUniprot(els.accessionInput.value.trim());
+
+})();
+</script>
+</body>
+</html>
