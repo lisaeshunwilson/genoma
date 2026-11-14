@@ -292,6 +292,11 @@
   .recode-btn{ margin-top:.35rem; }
   button[aria-pressed="true"]{ border-color:var(--accent); color:var(--accent); font-weight:600; }
 
+  .handoff-item{ border-top:1px solid var(--panel-border); padding-top:.6rem; margin-top:.6rem; }
+  .handoff-item:first-of-type{ border-top:none; padding-top:0; margin-top:0; }
+  .handoff-item-head{ display:flex; flex-direction:column; gap:.2rem; margin-bottom:.45rem; }
+  .handoff-item-head strong{ font-size:.85rem; }
+
   .outputs-tabs{ display:flex; gap:.3rem; border-bottom:1px solid var(--panel-border); }
   .outputs-tabs button{ border:none; border-bottom:2px solid transparent; border-radius:0; background:transparent; }
   .outputs-tabs button[aria-selected="true"]{ border-bottom-color:var(--accent); color:var(--accent); font-weight:600; }
@@ -468,6 +473,7 @@
               <button type="button" role="tab" data-pane="csv" aria-selected="false">Oligo CSV</button>
               <button type="button" role="tab" data-pane="fasta" aria-selected="false">FASTA</button>
               <button type="button" role="tab" data-pane="twistcsv" aria-selected="false">Twist CSV</button>
+              <button type="button" role="tab" data-pane="handoff" aria-selected="false">Handoff</button>
             </div>
           </div>
 
@@ -507,6 +513,45 @@
             </div>
             <div class="scrollx"><table id="twistCsvTable"></table></div>
             <p class="hint"><a href="https://www.twistbioscience.com/products/genes/manufacturability-analyzer" target="_blank" rel="noopener">Verify at Twist</a> — their Manufacturability Analyzer is the authoritative check on this same sequence.</p>
+          </div>
+
+          <div class="output-pane" data-pane="handoff" id="pane-handoff">
+            <p class="inline-note">The GenBank file is the construct. The manifest below is how you check the clone you get back. MutantRead does not plan the assembly — that stays with DNAForge.</p>
+
+            <div class="handoff-item">
+              <div class="handoff-item-head"><strong>Design record</strong><span class="hint">Why the boundaries, codons and controls are what they are — for the inventory system and whoever inherits this project.</span></div>
+              <div class="output-actions">
+                <button id="copyDesignJson" type="button">Copy JSON</button>
+                <button id="downloadDesignJson" type="button">Download .json</button>
+                <button id="copyDesignMd" type="button">Copy Markdown</button>
+                <button id="downloadDesignMd" type="button">Download .md</button>
+              </div>
+            </div>
+
+            <div class="handoff-item">
+              <div class="handoff-item-head"><strong>Verification manifest</strong><span class="hint">What a correct clone must look like: the expected codon, the expected protein, and every other codon that must stay unchanged. Turns sequencing readback into pass/fail.</span></div>
+              <div class="output-actions">
+                <button id="copyExpectedJson" type="button">Copy JSON</button>
+                <button id="downloadExpectedJson" type="button">Download .json</button>
+              </div>
+            </div>
+
+            <div class="handoff-item">
+              <div class="handoff-item-head"><strong>Expected FASTA</strong><span class="hint">The expected ORF of every selected construct, named to match — a ready-made reference set for an alignment tool.</span></div>
+              <div class="output-actions">
+                <button id="copyExpectedFasta" type="button">Copy FASTA</button>
+                <button id="downloadExpectedFasta" type="button">Download .fasta</button>
+              </div>
+            </div>
+
+            <div class="handoff-item">
+              <div class="handoff-item-head"><strong>Inventory CSV</strong><span class="hint">One row per physical item — the parent plasmid, each mutant plasmid, and each primer — with lineage, for import into an inventory system.</span></div>
+              <div class="output-actions">
+                <button id="copyInventoryCsv" type="button">Copy CSV</button>
+                <button id="downloadInventoryCsv" type="button">Download .csv</button>
+              </div>
+              <div class="scrollx"><table id="inventoryTable"></table></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1228,6 +1273,157 @@ function parseFasta(text){
   };
 }
 
+/* ---------------- DNAForge handoff: design record, verification manifest, inventory ----------------
+   MutantRead decides what to build and why; DNAForge builds, holds and checks it. These functions
+   produce the file-based handoff — no API call, no credentials, no assembly planning (the Gibson
+   arms above are part of the design and stay; MutantRead does not grow an assembly planner). */
+var MUTANTREAD_VERSION = "1.2.0";
+
+function windowReasonText(strategy){
+  if (strategy === "domain") return "Variant domain only, padded 5 residues each side; boundaries respect the annotated domain edges.";
+  if (strategy === "manual") return "Manually specified boundaries.";
+  return "Variant repeat plus one flanking repeat each side; boundaries respect annotated repeat edges.";
+}
+
+function buildDesignRecord(ctx){
+  return {
+    tool: "MutantRead", version: MUTANTREAD_VERSION, generatedAtUtc: new Date().toISOString(),
+    source: { accession: ctx.accession, proteinName: ctx.proteinName, geneName: ctx.geneName, sequenceLength: ctx.sourceSequenceLength },
+    variant: { input: ctx.parsedVariant ? ctx.parsedVariant.raw : null, parsed: ctx.parsedVariant || null },
+    referenceResidue: { position: ctx.proteinPos, observed: ctx.actualRef, matchesExpectation: !!ctx.referenceMatched },
+    codonInference: ctx.codonInferenceInfo ? {
+      status: "resolved",
+      sourceCodons: ctx.codonInferenceInfo.matching,
+      resolvedResidue: ctx.codonInferenceInfo.resolvedAA,
+      reasoning: aa1to3(ctx.refAA) + " codons carrying the stated reference base at that codon position are " +
+        ctx.codonInferenceInfo.matching.join(", ") + "; applying the substitution resolves to " + aa1to3(ctx.codonInferenceInfo.resolvedAA) + " in every case."
+    } : null,
+    variantResidue: { position: ctx.proteinPos, reference: ctx.refAA, alternate: ctx.altAA, label: "p." + aa1to3(ctx.refAA) + ctx.proteinPos + aa1to3(ctx.altAA) },
+    containingDomain: ctx.containingFeature ? { label: ctx.containingFeature.label, type: ctx.containingFeature.type, start: ctx.containingFeature.start, end: ctx.containingFeature.end } : null,
+    boundary: { strategy: ctx.windowStrategy, start: ctx.start, end: ctx.end, lengthResidues: ctx.end - ctx.start + 1, reason: windowReasonText(ctx.windowStrategy) },
+    tag: { key: ctx.tagKey, label: ctx.tagLabel, peptide: ctx.tagPeptide },
+    codonTable: ctx.codonTableLabel,
+    mutationPanel: (ctx.mutations || []).map(function(m){ return { reference: m.refAA, alternate: m.newAA, role: m.role, enabled: m.enabled, label: m.refAA + ctx.proteinPos + m.newAA }; }),
+    twistPreflight: (ctx.preflight || []).map(function(c){ return { key: c.key, label: c.label, status: c.status, text: c.text, advisory: c.advisory || null }; })
+  };
+}
+
+function buildDesignMarkdown(rec){
+  var lines = [];
+  lines.push("# " + rec.source.geneName + " " + rec.boundary.start + "-" + rec.boundary.end + " — design record");
+  lines.push("");
+  lines.push("Generated " + rec.generatedAtUtc + " by MutantRead v" + rec.version + ".");
+  lines.push("");
+  lines.push("## Source");
+  lines.push("- UniProt " + rec.source.accession + " — " + rec.source.proteinName + " (" + rec.source.sequenceLength + " aa)");
+  lines.push("");
+  lines.push("## Variant");
+  lines.push("- Input: `" + (rec.variant.input || "—") + "`");
+  lines.push("- Resolved: p." + aa1to3(rec.variantResidue.reference) + rec.variantResidue.position + aa1to3(rec.variantResidue.alternate));
+  lines.push("- Reference residue observed at position " + rec.referenceResidue.position + ": " + aa1to3(rec.referenceResidue.observed) + " (matches expectation: " + rec.referenceResidue.matchesExpectation + ")");
+  if (rec.codonInference) {
+    lines.push("- Codon inference: source codons " + rec.codonInference.sourceCodons.join(", ") + " → " + aa1to3(rec.codonInference.resolvedResidue));
+    lines.push("  - " + rec.codonInference.reasoning);
+  }
+  lines.push("");
+  lines.push("## Domain context");
+  lines.push(rec.containingDomain ? "- " + rec.containingDomain.label + " (" + rec.containingDomain.start + "–" + rec.containingDomain.end + ")" : "- No annotated domain, repeat, region or motif covers this residue.");
+  lines.push("");
+  lines.push("## Construct boundary");
+  lines.push("- Strategy: " + rec.boundary.strategy);
+  lines.push("- Range: " + rec.boundary.start + "–" + rec.boundary.end + " (" + rec.boundary.lengthResidues + " aa)");
+  lines.push("- Reason: " + rec.boundary.reason);
+  lines.push("");
+  lines.push("## Tag and codon table");
+  lines.push("- Tag: " + rec.tag.label + " (`" + rec.tag.peptide + "`)");
+  lines.push("- Back-translation table: " + rec.codonTable);
+  lines.push("");
+  lines.push("## Mutagenesis panel");
+  rec.mutationPanel.forEach(function(m){ lines.push("- " + (m.enabled ? "[x]" : "[ ]") + " " + m.label + " — " + m.role); });
+  lines.push("");
+  lines.push("## Twist manufacturability pre-flight");
+  rec.twistPreflight.forEach(function(c){ lines.push("- **" + c.status.toUpperCase() + "** " + c.label + ": " + c.text + (c.advisory ? " _(" + c.advisory + ")_" : "")); });
+  lines.push("");
+  return lines.join("\n");
+}
+
+function buildVerificationManifest(ctx){
+  var totalCodons = Math.floor(ctx.orf.length / 3);
+  var mutCodonPos1 = Math.floor(ctx.variantCodonStart / 3) + 1;
+  var parentName = sanitizeTwistName(ctx.geneName + "_" + ctx.start + "-" + ctx.end + "_WT");
+  var constructs = (ctx.mutations || []).filter(function(m){ return m.enabled; }).map(function(m){
+    var mutCodon = ctx.table[m.newAA] || "NNN";
+    var codonIdx0 = ctx.variantCodonStart;
+    var expectedOrf = ctx.orf.slice(0, codonIdx0) + mutCodon + ctx.orf.slice(codonIdx0 + 3);
+    var aaIdx = codonIdx0 / 3;
+    var expectedProtein = ctx.translation.slice(0, aaIdx) + m.newAA + ctx.translation.slice(aaIdx + 1);
+    var invariant = [];
+    for (var p = 1; p <= totalCodons; p++) if (p !== mutCodonPos1) invariant.push(p);
+    return {
+      name: sanitizeTwistName(ctx.geneName + "_" + ctx.proteinPos + m.refAA + m.newAA),
+      mutation: { reference: m.refAA, alternate: m.newAA, role: m.role, label: m.refAA + ctx.proteinPos + m.newAA },
+      expectedOrf: expectedOrf,
+      expectedCodon: { position: mutCodonPos1, sequence: mutCodon },
+      expectedProtein: expectedProtein,
+      invariant: invariant
+    };
+  });
+  return { gene: ctx.geneName, parentName: parentName, parentOrf: ctx.orf, constructs: constructs };
+}
+
+// The checker the whole manifest exists to enable: for a sequenced/assembled candidate, confirm the
+// intended codon landed AND that every other codon matches the parent exactly — catching a silent
+// second change that a person eyeballing a chromatogram would likely miss.
+function checkInvariants(candidateOrf, construct, parentOrf){
+  var violations = [];
+  (construct.invariant || []).forEach(function(pos){
+    var idx = (pos - 1) * 3;
+    var expectedCodon = parentOrf.slice(idx, idx + 3);
+    var observedCodon = candidateOrf.slice(idx, idx + 3);
+    if (observedCodon !== expectedCodon) violations.push({ position: pos, expected: expectedCodon, observed: observedCodon });
+  });
+  var cIdx = (construct.expectedCodon.position - 1) * 3;
+  var observedMutCodon = candidateOrf.slice(cIdx, cIdx + 3);
+  var codonOk = observedMutCodon === construct.expectedCodon.sequence;
+  return {
+    ok: violations.length === 0 && codonOk, codonOk: codonOk,
+    codonExpected: construct.expectedCodon.sequence, codonObserved: observedMutCodon,
+    violations: violations
+  };
+}
+
+function buildExpectedFasta(manifest){
+  return manifest.constructs.map(function(c){ return ">" + c.name + "\n" + wrapSeq(c.expectedOrf, 70); }).join("\n\n") + "\n";
+}
+
+var INVENTORY_COLUMNS = ["Name","Type","Sequence","Length","Parent","Description","Source"];
+function buildInventoryRows(ctx, manifest){
+  var ts = new Date().toISOString();
+  var source = "MutantRead " + ts;
+  var rows = [];
+  rows.push({
+    Name: manifest.parentName, Type:"plasmid", Sequence: manifest.parentOrf, Length: manifest.parentOrf.length,
+    Parent:"", Description:"Parent construct (" + ctx.tagLabel + " tag, residues " + ctx.start + "-" + ctx.end + ")", Source: source
+  });
+  manifest.constructs.forEach(function(c){
+    rows.push({
+      Name: c.name, Type:"plasmid", Sequence: c.expectedOrf, Length: c.expectedOrf.length,
+      Parent: manifest.parentName, Description: c.mutation.label + " — " + c.mutation.role, Source: source
+    });
+  });
+  (ctx.mutations || []).filter(function(m){ return m.enabled; }).forEach(function(m){
+    var construct = manifest.constructs.filter(function(c){ return c.mutation.reference === m.refAA && c.mutation.alternate === m.newAA; })[0];
+    var design = designMutagenicPrimer(ctx.orf, ctx.variantCodonStart, ctx.table[m.newAA] || "NNN");
+    if (!design || !construct) return;
+    rows.push({ Name: construct.name + "_F", Type:"oligo", Sequence: design.forward, Length: design.forward.length, Parent: construct.name, Description:"Forward mutagenic primer for " + construct.mutation.label, Source: source });
+    rows.push({ Name: construct.name + "_R", Type:"oligo", Sequence: design.reverse, Length: design.reverse.length, Parent: construct.name, Description:"Reverse mutagenic primer for " + construct.mutation.label, Source: source });
+  });
+  var gibson = gibsonArms(ctx.orf);
+  rows.push({ Name: manifest.parentName + "_GibsonArm5", Type:"oligo", Sequence: gibson.arm5, Length: gibson.arm5.length, Parent: manifest.parentName, Description:"Gibson homology arm (5') for parent construct assembly", Source: source });
+  rows.push({ Name: manifest.parentName + "_GibsonArm3", Type:"oligo", Sequence: gibson.arm3, Length: gibson.arm3.length, Parent: manifest.parentName, Description:"Gibson homology arm (3') for parent construct assembly", Source: source });
+  return rows;
+}
+
 /* ====================== expose pure functions for tests ====================== */
 var MR_EXPORTS = {
   AA1_TO_3: AA1_TO_3, AA3_TO_1: AA3_TO_1, CODON_TABLE: CODON_TABLE, AA_TO_CODONS: AA_TO_CODONS,
@@ -1242,7 +1438,10 @@ var MR_EXPORTS = {
   SYNTHETIC_VCF: SYNTHETIC_VCF, formatOrigin: formatOrigin, wrapQualifier: wrapQualifier, stripTranscriptPrefix: stripTranscriptPrefix,
   longestIdenticalCodonRun: longestIdenticalCodonRun, checkGlobalGC: checkGlobalGC, checkLocalGC: checkLocalGC,
   findRepeat: findRepeat, checkRepeats: checkRepeats, longestHomopolymer: longestHomopolymer, checkHomopolymers: checkHomopolymers,
-  runPreflight: runPreflight, recodeRange: recodeRange, sanitizeTwistName: sanitizeTwistName, buildTwistCsvRows: buildTwistCsvRows
+  runPreflight: runPreflight, recodeRange: recodeRange, sanitizeTwistName: sanitizeTwistName, buildTwistCsvRows: buildTwistCsvRows,
+  MUTANTREAD_VERSION: MUTANTREAD_VERSION, windowReasonText: windowReasonText, buildDesignRecord: buildDesignRecord,
+  buildDesignMarkdown: buildDesignMarkdown, buildVerificationManifest: buildVerificationManifest, checkInvariants: checkInvariants,
+  buildExpectedFasta: buildExpectedFasta, INVENTORY_COLUMNS: INVENTORY_COLUMNS, buildInventoryRows: buildInventoryRows
 };
 if (typeof globalThis !== "undefined") globalThis.__MR__ = MR_EXPORTS;
 
@@ -1270,6 +1469,9 @@ var els = {};
  "outputsEmpty","outputsBody","outputsChip","qcLine","preflightPanel","genbankText","fastaText","csvTable",
  "copyGenbank","downloadGenbank","copyCsv","downloadCsv","copyFasta","downloadFasta",
  "twistModeFragment","twistModeOligo","twistCsvTable","copyTwistCsv","downloadTwistCsv",
+ "copyDesignJson","downloadDesignJson","copyDesignMd","downloadDesignMd",
+ "copyExpectedJson","downloadExpectedJson","copyExpectedFasta","downloadExpectedFasta",
+ "copyInventoryCsv","downloadInventoryCsv","inventoryTable",
  "themeToggle"
 ].forEach(function(id){ els[id] = document.getElementById(id); });
 
@@ -1433,6 +1635,7 @@ function runValidation(){
   var checklist = [];
   var hardFail = false;
   var proteinPos = null, refAA = null, altAA = null, altCandidates = null;
+  var actualRefOut = null, containingOut = null, codonInferenceInfo = null;
 
   checklist.push({ status:"pass", text:"Accession " + state.accession + " retrieved — " + state.sequence.length + " aa." + (state.usingCache ? " (served from local cache)" : "") });
 
@@ -1452,6 +1655,7 @@ function runValidation(){
       hardFail = true;
     } else {
       var actualRef = state.sequence[proteinPos - 1];
+      actualRefOut = actualRef;
       checklist.push({ status:"pass", text:"Residue " + proteinPos + " in the retrieved sequence is " + aa1to3(actualRef) + " (" + actualRef + ")." });
 
       if (parsed.type === "c") {
@@ -1461,6 +1665,7 @@ function runValidation(){
           hardFail = true;
         } else if (inf.status === "ok") {
           refAA = actualRef; altAA = inf.aa;
+          codonInferenceInfo = { matching: inf.matching, resolvedAA: altAA };
           checklist.push({ status:"pass", text:"Protein change inferred as p." + aa1to3(refAA) + proteinPos + aa1to3(altAA) + ".",
             reasoning: aa1to3(refAA) + " codons carrying " + parsed.refNt + " at position " + (parsed.codonOffset+1) + " are " + inf.matching.join(", ") + ". Applying " + parsed.refNt + ">" + parsed.altNt + " gives " + aa1to3(altAA) + " in every case." });
         } else {
@@ -1480,6 +1685,7 @@ function runValidation(){
 
       if (!hardFail) {
         var containing = smallestContainingFeature(state.features, proteinPos);
+        containingOut = containing;
         if (containing) checklist.push({ status:"pass", text:"Residue " + proteinPos + " falls within " + containing.label + " (" + containing.start + "–" + containing.end + ")." });
         else checklist.push({ status:"warn", text:"No annotated domain, repeat, region or motif covers residue " + proteinPos + "." });
       }
@@ -1495,6 +1701,11 @@ function runValidation(){
   state.refAA = refAA;
   state.altAA = altAA;
   state.altCandidates = altCandidates;
+  state.variant = parsed.error ? null : parsed;
+  state.actualRef = actualRefOut;
+  state.containingFeature = containingOut;
+  state.codonInferenceInfo = codonInferenceInfo;
+  state.referenceMatched = !hardFail;
 
   var overall = hardFail ? "fail" : (checklist.some(function(c){ return c.status === "warn"; }) ? "warn" : "pass");
   renderChecklist(checklist, overall);
@@ -1736,11 +1947,15 @@ function buildConstruct(){
 
   var ctx = {
     accession: state.accession, geneName: state.geneName, proteinName: state.proteinName,
-    start: start, end: end, tagLabel: tag.label, tagPeptide: tag.peptide, fragment: fragment,
+    sourceSequenceLength: state.sequence.length,
+    start: start, end: end, tagKey: tagKey, tagLabel: tag.label, tagPeptide: tag.peptide, fragment: fragment,
     translation: translation, orf: orf, features: state.features, proteinPos: state.proteinPos,
     refAA: state.refAA, altAA: state.altAA, mutations: state.mutations, table: table,
     secondaryTable: secondaryTable, codonTableLabel: tableLabel, variantCodonStart: variantCodonStart,
-    twistMode: "fragment"
+    twistMode: "fragment",
+    parsedVariant: state.variant, actualRef: state.actualRef, containingFeature: state.containingFeature,
+    codonInferenceInfo: state.codonInferenceInfo, referenceMatched: state.referenceMatched,
+    windowStrategy: state.windowStrategy
   };
   state.built = ctx;
 
@@ -1758,6 +1973,7 @@ function refreshOutputs(ctx){
   renderCsv(ctx);
   renderFasta(ctx);
   renderTwistCsv(ctx);
+  renderHandoff(ctx);
 }
 
 function renderSiteScan(orf){
@@ -1833,6 +2049,39 @@ els.twistModeFragment.addEventListener("click", function(){ setTwistMode("fragme
 els.twistModeOligo.addEventListener("click", function(){ setTwistMode("oligopool"); });
 els.copyTwistCsv.addEventListener("click", function(){ if (state.built) copyText(state.built.twistCsv); });
 els.downloadTwistCsv.addEventListener("click", function(){ if (state.built) downloadText(state.built.accession + "_twist_" + state.built.twistMode + ".csv", state.built.twistCsv); });
+
+/* ---------------- DNAForge handoff (design record, verification manifest, inventory) ---------------- */
+function renderHandoff(ctx){
+  var record = buildDesignRecord(ctx);
+  ctx.designRecord = record;
+  ctx.designJson = JSON.stringify(record, null, 2);
+  ctx.designMarkdown = buildDesignMarkdown(record);
+
+  var manifest = buildVerificationManifest(ctx);
+  ctx.expectedManifest = manifest;
+  ctx.expectedJson = JSON.stringify(manifest, null, 2);
+  ctx.expectedFasta = buildExpectedFasta(manifest);
+
+  var invRows = buildInventoryRows(ctx, manifest);
+  ctx.inventoryRows = invRows;
+  ctx.inventoryCsv = rowsToCsv(invRows, INVENTORY_COLUMNS);
+
+  var html = "<tr>" + INVENTORY_COLUMNS.map(function(c){ return "<th>" + c + "</th>"; }).join("") + "</tr>";
+  invRows.forEach(function(r){
+    html += "<tr>" + INVENTORY_COLUMNS.map(function(c){ return "<td class=\"" + (c === "Sequence" ? "seq" : "") + "\">" + escapeXml(String(r[c])) + "</td>"; }).join("") + "</tr>";
+  });
+  els.inventoryTable.innerHTML = html;
+}
+els.copyDesignJson.addEventListener("click", function(){ if (state.built) copyText(state.built.designJson); });
+els.downloadDesignJson.addEventListener("click", function(){ if (state.built) downloadText(state.built.geneName + "_" + state.built.start + "-" + state.built.end + "_design.json", state.built.designJson); });
+els.copyDesignMd.addEventListener("click", function(){ if (state.built) copyText(state.built.designMarkdown); });
+els.downloadDesignMd.addEventListener("click", function(){ if (state.built) downloadText(state.built.geneName + "_" + state.built.start + "-" + state.built.end + "_design.md", state.built.designMarkdown); });
+els.copyExpectedJson.addEventListener("click", function(){ if (state.built) copyText(state.built.expectedJson); });
+els.downloadExpectedJson.addEventListener("click", function(){ if (state.built) downloadText(state.built.geneName + "_" + state.built.start + "-" + state.built.end + "_expected.json", state.built.expectedJson); });
+els.copyExpectedFasta.addEventListener("click", function(){ if (state.built) copyText(state.built.expectedFasta); });
+els.downloadExpectedFasta.addEventListener("click", function(){ if (state.built) downloadText(state.built.geneName + "_expected.fasta", state.built.expectedFasta); });
+els.copyInventoryCsv.addEventListener("click", function(){ if (state.built) copyText(state.built.inventoryCsv); });
+els.downloadInventoryCsv.addEventListener("click", function(){ if (state.built) downloadText(state.built.geneName + "_inventory.csv", state.built.inventoryCsv); });
 
 function renderPrimersAndGibson(ctx){
   var pane = document.getElementById("pane-primers");
