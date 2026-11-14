@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MutantRead — Pitch</title>
+<meta name="description" content="MutantRead: from variant to construct. A five-minute pitch deck.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef3f6;
+    --panel-bg:#ffffff;
+    --panel-border:#c7d3da;
+    --fg:#152027;
+    --fg-muted:#55666f;
+    --fg-faint:#8697a0;
+    --accent:#0d6d64;
+    --accent-strong:#095a53;
+    --accent-contrast:#ffffff;
+    --accent-soft:#dcece9;
+    --pass:#1d7a4c;
+    --pass-bg:#e1f1e6;
+    --fail:#a82a2a;
+    --fail-bg:#fbe4e4;
+    --chip-bg:#ffffff;
+    --font-sans:'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1418;
+      --panel-bg:#161e24;
+      --panel-border:#2b3942;
+      --fg:#e3eaee;
+      --fg-muted:#9fb0b9;
+      --fg-faint:#6d808a;
+      --accent:#2fb6a8;
+      --accent-strong:#49cabd;
+      --accent-contrast:#071412;
+      --accent-soft:#17312e;
+      --pass:#45cd84;
+      --pass-bg:#122a1c;
+      --fail:#f0706f;
+      --fail-bg:#321515;
+      --chip-bg:#1b252c;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1418;
+    --panel-bg:#161e24;
+    --panel-border:#2b3942;
+    --fg:#e3eaee;
+    --fg-muted:#9fb0b9;
+    --fg-faint:#6d808a;
+    --accent:#2fb6a8;
+    --accent-strong:#49cabd;
+    --accent-contrast:#071412;
+    --accent-soft:#17312e;
+    --pass:#45cd84;
+    --pass-bg:#122a1c;
+    --fail:#f0706f;
+    --fail-bg:#321515;
+    --chip-bg:#1b252c;
+    color-scheme: dark;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:var(--bg); }
+  body{ font-family:var(--font-sans); color:var(--fg); }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .mono{ font-family:var(--font-mono); }
+
+  #deck{ position:fixed; inset:0; }
+  .slide{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    padding: clamp(24px, 5vw, 80px) clamp(24px, 6vw, 120px) clamp(68px, 9vh, 110px);
+    text-align:center;
+    overflow:hidden;
+  }
+  .slide.active{ display:flex; }
+
+  .eyebrow{
+    font-family:var(--font-mono); font-size: clamp(11px, 1.1vw, 14px);
+    letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
+    margin:0 0 .6em;
+    font-weight:600;
+  }
+  .headline{
+    font-family:var(--font-sans); font-weight:700;
+    font-size: clamp(26px, 4.2vw, 54px);
+    line-height:1.12; margin:0 0 .3em; max-width:20ch;
+  }
+  .support{
+    font-family:var(--font-sans); color:var(--fg-muted);
+    font-size: clamp(14px, 1.4vw, 19px); line-height:1.5;
+    max-width:52ch; margin:.6em 0 0;
+  }
+  .bignum{
+    font-family:var(--font-mono); font-weight:700;
+    font-size: clamp(38px, 7vw, 92px);
+    letter-spacing:-0.02em; line-height:1;
+  }
+  .biglabel{
+    font-family:var(--font-sans); color:var(--fg-muted);
+    font-size: clamp(12px, 1.2vw, 15px); letter-spacing:.04em;
+    text-transform:uppercase; margin-top:.4em;
+  }
+  .visual{ margin: clamp(16px,3vh,40px) 0; max-width:100%; display:flex; justify-content:center; }
+  .visual svg{ max-width:100%; height:auto; }
+  .slide-title h1{
+    font-family:var(--font-sans); font-weight:700;
+    font-size: clamp(44px, 9vw, 110px); margin:0; letter-spacing:-0.01em;
+  }
+  .tagline{ font-family:var(--font-sans); color:var(--fg-muted); font-size:clamp(15px,1.8vw,22px); margin:.4em 0 0; }
+  .byline{ position:absolute; bottom: clamp(104px,14vh,134px); left:0; right:0; text-align:center;
+    font-family:var(--font-mono); font-size:clamp(11px,1vw,13px); color:var(--fg-faint); padding:0 2rem; }
+
+  .pipeline{ display:flex; align-items:center; gap:.4rem; flex-wrap:nowrap; }
+  .pipeline .node{
+    font-family:var(--font-mono); font-size:clamp(10px,1vw,13px);
+    border:1px solid var(--panel-border); background:var(--panel-bg);
+    padding:.5em .7em; border-radius:3px; white-space:nowrap; color:var(--fg);
+  }
+  .pipeline .arrow{ color:var(--fg-faint); font-size:1.1em; }
+
+  .demo-beats{ display:flex; gap: clamp(16px,4vw,56px); justify-content:center; margin: clamp(16px,3vh,32px) 0; flex-wrap:wrap; }
+  .demo-beat{ display:flex; flex-direction:column; align-items:center; gap:.3rem; }
+  .demo-beat .n{ font-family:var(--font-mono); font-weight:700; color:var(--accent); font-size:clamp(22px,3vw,34px); }
+  .demo-beat .t{ font-family:var(--font-sans); font-weight:600; font-size:clamp(14px,1.6vw,19px); }
+  .demo-url{ font-family:var(--font-mono); font-size:clamp(22px,4vw,44px); color:var(--accent-strong); font-weight:600; }
+
+  .cards{ display:flex; gap:clamp(12px,2.4vw,28px); flex-wrap:wrap; justify-content:center; margin-top:clamp(12px,2.4vh,28px); }
+  .card{
+    border:1px solid var(--panel-border); background:var(--panel-bg);
+    padding: clamp(14px,1.8vw,22px); border-radius:4px; width: clamp(160px,18vw,240px);
+    text-align:left;
+  }
+  .card .k{ font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--fg-faint); margin-bottom:.5em; }
+  .card .v{ font-family:var(--font-sans); font-weight:600; font-size:clamp(14px,1.4vw,18px); line-height:1.3; }
+
+  /* ---------------- chrome: progress rail, hint, buttons ---------------- */
+  #rail{
+    position:fixed; left:0; right:0; bottom:0; height:56px;
+    display:flex; align-items:center; gap:.8rem;
+    padding:0 clamp(16px,3vw,32px);
+    background:var(--panel-bg); border-top:1px solid var(--panel-border);
+    z-index:20;
+  }
+  #segments{ display:flex; gap:.35rem; flex:1; min-width:0; }
+  .seg{
+    flex:1; height:6px; border:none; border-radius:3px; background:var(--panel-border);
+    cursor:pointer; padding:0; min-width:10px;
+  }
+  .seg.current{ background:var(--accent); }
+  .seg:hover{ background:var(--accent-soft); }
+  #slideNum{ font-family:var(--font-mono); font-size:13px; color:var(--fg-muted); white-space:nowrap; min-width:4.5em; text-align:right; }
+  .iconbtn{
+    font-family:var(--font-sans); font-size:12px; background:var(--panel-bg); color:var(--fg);
+    border:1px solid var(--panel-border); border-radius:3px; padding:.4rem .6rem; cursor:pointer; white-space:nowrap;
+  }
+  .iconbtn:hover{ border-color:var(--accent); color:var(--accent); }
+
+  #hint{
+    position:fixed; bottom:68px; left:50%; transform:translateX(-50%);
+    font-family:var(--font-mono); font-size:12px; color:var(--fg-muted);
+    background:var(--chip-bg); border:1px solid var(--panel-border); border-radius:20px;
+    padding:.5em 1em; z-index:30; opacity:1; transition:opacity .6s ease;
+    pointer-events:none;
+  }
+  #hint.hidden{ opacity:0; }
+
+  @media (max-width:400px){
+    .headline{ max-width:16ch; }
+    .pipeline{ flex-wrap:wrap; justify-content:center; }
+    #rail{ gap:.4rem; padding:0 10px; }
+    #slideNum{ min-width:3.2em; font-size:11px; }
+    .iconbtn{ padding:.35rem .45rem; font-size:11px; }
+  }
+</style>
+</head>
+<body>
+<div id="deck" role="group" aria-label="MutantRead pitch deck">
+
+  <!-- ===== Slide 1 — Title ===== -->
+  <section class="slide slide-title" id="slide-1" data-n="1" aria-label="Slide 1">
+    <p class="eyebrow">GENOMA INSTITUTE · READ SUITE</p>
+    <h1 class="headline" style="font-size:clamp(44px,9vw,110px); max-width:none;">MutantRead</h1>
+    <p class="support tagline" style="max-width:none;">From variant to construct.</p>
+    <div class="visual" aria-hidden="true">
+      <svg viewBox="0 0 640 180" width="640" height="180" role="img" aria-label="c.6958A>G transforms into a labelled plasmid construct">
+        <text x="20" y="98" font-family="var(--font-mono)" font-size="26" font-weight="600" style="fill:var(--fg)">c.6958A&gt;G</text>
+        <line x1="220" y1="90" x2="300" y2="90" style="stroke:var(--fg-faint)" stroke-width="2"></line>
+        <polygon points="300,90 286,83 286,97" style="fill:var(--fg-faint)"></polygon>
+        <g transform="translate(410,95)">
+          <circle r="58" style="fill:none;stroke:var(--panel-border)" stroke-width="10"></circle>
+          <path d="M -58 0 A 58 58 0 0 1 10 -57.1" style="fill:none;stroke:var(--accent)" stroke-width="10"></path>
+          <path d="M 10 -57.1 A 58 58 0 0 1 50 28" style="fill:none;stroke:var(--accent-strong)" stroke-width="10"></path>
+          <circle cx="50" cy="28" r="5" style="fill:var(--fail)"></circle>
+          <text x="-66" y="-38" font-family="var(--font-mono)" font-size="12" text-anchor="middle" style="fill:var(--fg-muted)">tag</text>
+          <text x="10" y="-68" font-family="var(--font-mono)" font-size="12" text-anchor="middle" style="fill:var(--fg-muted)">insert</text>
+          <text x="68" y="48" font-family="var(--font-mono)" font-size="12" text-anchor="middle" style="fill:var(--fail)">variant</text>
+        </g>
+      </svg>
+    </div>
+    <p class="byline mono" id="bylineText"></p>
+  </section>
+
+  <!-- ===== Slide 2 — The problem ===== -->
+  <section class="slide" id="slide-2" data-n="2" aria-label="Slide 2">
+    <h1 class="headline">Seven manual steps between them.</h1>
+    <div class="visual" aria-hidden="true">
+      <div class="pipeline">
+        <span class="node">c.6958A&gt;G</span><span class="arrow">→</span>
+        <span class="node">sequence</span><span class="arrow">→</span>
+        <span class="node">boundaries</span><span class="arrow">→</span>
+        <span class="node">back-translate</span><span class="arrow">→</span>
+        <span class="node">primers</span><span class="arrow">→</span>
+        <span class="node">cut sites</span><span class="arrow">→</span>
+        <span class="node">order</span>
+      </div>
+    </div>
+    <div class="bignum" style="color:var(--fail)">~1 day</div>
+    <div class="biglabel">per construct, by hand</div>
+  </section>
+
+  <!-- ===== Slide 3 — The silent failure ===== -->
+  <section class="slide" id="slide-3" data-n="3" aria-label="Slide 3">
+    <h1 class="headline">The numbers look right and are wrong.</h1>
+    <div class="visual" aria-hidden="true">
+      <svg viewBox="0 0 860 260" width="860" height="260" role="img" aria-label="Two isoform rulers offset by an insert, disagreeing at residue 2320">
+        <!-- upper ruler: canonical -->
+        <text x="40" y="38" font-family="var(--font-mono)" font-size="13" style="fill:var(--fg-muted)">canonical transcript</text>
+        <line x1="40" y1="60" x2="780" y2="60" style="stroke:var(--fg-faint)" stroke-width="2"></line>
+        <line x1="560" y1="40" x2="560" y2="150" stroke-dasharray="4 4" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+        <circle cx="560" cy="60" r="5" style="fill:var(--accent)"></circle>
+        <text x="560" y="26" text-anchor="middle" font-family="var(--font-mono)" font-size="13" style="fill:var(--fg-muted)">2320</text>
+        <text x="560" y="90" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="22" style="fill:var(--accent)">Arg</text>
+
+        <!-- lower ruler: alternate isoform with an earlier insert -->
+        <text x="40" y="128" font-family="var(--font-mono)" font-size="13" style="fill:var(--fg-muted)">reported transcript</text>
+        <line x1="40" y1="150" x2="300" y2="150" style="stroke:var(--fg-faint)" stroke-width="2"></line>
+        <rect x="300" y="140" width="34" height="20" style="fill:var(--fail-bg);stroke:var(--fail)" stroke-width="1.5"></rect>
+        <text x="317" y="188" text-anchor="middle" font-family="var(--font-mono)" font-size="11" style="fill:var(--fail)">+12 aa insert</text>
+        <line x1="334" y1="150" x2="780" y2="150" style="stroke:var(--fg-faint)" stroke-width="2"></line>
+        <circle cx="560" cy="150" r="5" style="fill:var(--fail)"></circle>
+        <text x="560" y="180" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="22" style="fill:var(--fail)">Lys</text>
+
+        <g transform="translate(600,205)">
+          <rect x="0" y="0" width="200" height="34" rx="17" style="fill:var(--fail-bg);stroke:var(--fail)" stroke-width="1.5"></rect>
+          <text x="100" y="22" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="13" style="fill:var(--fail)">MutantRead stops here</text>
+          <line x1="20" y1="0" x2="-20" y2="-45" style="stroke:var(--fail)" stroke-width="1.5"></line>
+        </g>
+      </svg>
+    </div>
+    <p class="support">The construct still builds and the primers still anneal — found months later at the bench.</p>
+  </section>
+
+  <!-- ===== Slide 4 — Demo ===== -->
+  <section class="slide" id="slide-4" data-n="4" aria-label="Slide 4">
+    <p class="eyebrow">DEMO</p>
+    <h1 class="headline">Paste a variant. Get an order.</h1>
+    <div class="demo-beats" aria-hidden="true">
+      <div class="demo-beat"><span class="n">1</span><span class="t">Resolve</span></div>
+      <div class="demo-beat"><span class="n">2</span><span class="t">Place it</span></div>
+      <div class="demo-beat"><span class="n">3</span><span class="t">Build</span></div>
+    </div>
+    <div class="demo-url mono">genomainstitute.org/mutantread</div>
+  </section>
+
+  <!-- ===== Slide 5 — The derivation ===== -->
+  <section class="slide" id="slide-5" data-n="5" aria-label="Slide 5">
+    <h1 class="headline">It derives. It does not look up.</h1>
+    <div class="visual" aria-hidden="true">
+      <svg viewBox="0 0 820 300" width="820" height="300" role="img" aria-label="Derivation tree from Arg and A at codon position 1 to Gly">
+        <text x="410" y="28" text-anchor="middle" font-family="var(--font-mono)" font-size="16" style="fill:var(--fg-muted)">Arg + A at codon position 1</text>
+
+        <line x1="400" y1="40" x2="260" y2="92" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+        <line x1="420" y1="40" x2="560" y2="92" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+
+        <rect x="210" y="98" width="100" height="40" rx="4" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="1.5"></rect>
+        <text x="260" y="124" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="18" style="fill:var(--accent-strong)">AGA</text>
+        <rect x="510" y="98" width="100" height="40" rx="4" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="1.5"></rect>
+        <text x="560" y="124" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="18" style="fill:var(--accent-strong)">AGG</text>
+
+        <text x="410" y="162" text-anchor="middle" font-family="var(--font-mono)" font-style="italic" font-size="13" style="fill:var(--fg-muted)">apply A&gt;G</text>
+
+        <line x1="260" y1="138" x2="260" y2="180" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+        <line x1="560" y1="138" x2="560" y2="180" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+
+        <rect x="210" y="182" width="100" height="40" rx="4" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="1.5"></rect>
+        <text x="260" y="208" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="18" style="fill:var(--accent-strong)">GGA</text>
+        <rect x="510" y="182" width="100" height="40" rx="4" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="1.5"></rect>
+        <text x="560" y="208" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="18" style="fill:var(--accent-strong)">GGG</text>
+
+        <line x1="260" y1="222" x2="400" y2="252" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+        <line x1="560" y1="222" x2="420" y2="252" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+
+        <text x="410" y="286" text-anchor="middle" font-family="var(--font-mono)" font-weight="700" font-size="44" style="fill:var(--accent)">Gly</text>
+      </svg>
+    </div>
+    <p class="support">When the branches disagree, it names the alternatives instead of guessing.</p>
+  </section>
+
+  <!-- ===== Slide 6 — The mechanism fork ===== -->
+  <section class="slide" id="slide-6" data-n="6" aria-label="Slide 6">
+    <h1 class="headline">One question decides the therapy.</h1>
+    <div class="visual" aria-hidden="true">
+      <svg viewBox="0 0 900 300" width="900" height="300" role="img" aria-label="Fork from the variant to two opposite mechanism outcomes">
+        <rect x="20" y="130" width="150" height="44" rx="4" style="fill:var(--panel-bg);stroke:var(--fg-muted)" stroke-width="1.5"></rect>
+        <text x="95" y="157" text-anchor="middle" font-family="var(--font-mono)" font-weight="600" font-size="14" style="fill:var(--fg)">p.(Arg2320Gly)</text>
+
+        <path d="M 170 140 C 260 90, 260 60, 330 60" style="fill:none;stroke:var(--fg-faint)" stroke-width="1.5"></path>
+        <path d="M 170 164 C 260 210, 260 240, 330 240" style="fill:none;stroke:var(--fg-faint)" stroke-width="1.5"></path>
+
+        <rect x="330" y="38" width="190" height="44" rx="4" style="fill:var(--pass-bg);stroke:var(--pass)" stroke-width="1.5"></rect>
+        <text x="425" y="65" text-anchor="middle" font-family="var(--font-sans)" font-weight="600" font-size="14" style="fill:var(--pass)">dominant-negative</text>
+
+        <rect x="330" y="218" width="190" height="44" rx="4" style="fill:var(--fail-bg);stroke:var(--fail)" stroke-width="1.5"></rect>
+        <text x="425" y="245" text-anchor="middle" font-family="var(--font-sans)" font-weight="600" font-size="14" style="fill:var(--fail)">loss of function</text>
+
+        <line x1="520" y1="60" x2="590" y2="60" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+        <line x1="520" y1="240" x2="590" y2="240" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+
+        <rect x="590" y="38" width="210" height="44" rx="4" style="fill:var(--panel-bg);stroke:var(--panel-border)" stroke-width="1.5"></rect>
+        <text x="695" y="65" text-anchor="middle" font-family="var(--font-sans)" font-size="13" style="fill:var(--fg)">lower the mutant transcript</text>
+
+        <rect x="590" y="218" width="210" height="44" rx="4" style="fill:var(--panel-bg);stroke:var(--panel-border)" stroke-width="1.5"></rect>
+        <text x="695" y="245" text-anchor="middle" font-family="var(--font-sans)" font-size="13" style="fill:var(--fg)">lower the mutant transcript</text>
+
+        <line x1="800" y1="60" x2="845" y2="60" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+        <line x1="800" y1="240" x2="845" y2="240" style="stroke:var(--fg-faint)" stroke-width="1.5"></line>
+
+        <circle cx="868" cy="60" r="26" style="fill:var(--pass)"></circle>
+        <path d="M 857 60 L 865 69 L 881 49" style="fill:none;stroke:var(--accent-contrast)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+
+        <circle cx="868" cy="240" r="26" style="fill:var(--fail)"></circle>
+        <path d="M 857 229 L 879 251 M 879 229 L 857 251" style="stroke:var(--accent-contrast)" stroke-width="5" stroke-linecap="round"></path>
+      </svg>
+    </div>
+    <p class="support" id="mechNote"></p>
+  </section>
+
+  <!-- ===== Slide 7 — The length wall ===== -->
+  <section class="slide" id="slide-7" data-n="7" aria-label="Slide 7">
+    <h1 class="headline">Most real targets are too long.</h1>
+    <div class="visual" aria-hidden="true">
+      <svg viewBox="0 0 860 220" width="860" height="220" role="img" aria-label="2,472 residue protein crosses the model context limit; a 326 residue fragment does not">
+        <line x1="150" y1="44" x2="150" y2="176" stroke-dasharray="5 5" style="stroke:var(--fg-muted)" stroke-width="2"></line>
+        <text x="150" y="30" text-anchor="middle" font-family="var(--font-mono)" font-size="12" style="fill:var(--fg-muted)">~1,400 aa model limit</text>
+
+        <rect x="150" y="56" width="640" height="34" style="fill:var(--fail-bg);stroke:var(--fail)" stroke-width="1.5"></rect>
+        <text x="800" y="48" text-anchor="end" font-family="var(--font-mono)" font-weight="700" font-size="30" style="fill:var(--fail)">2,472</text>
+        <text x="800" y="104" text-anchor="end" font-family="var(--font-sans)" font-size="12" style="fill:var(--fg-muted)">full-length protein</text>
+
+        <rect x="150" y="140" width="84.6" height="34" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="1.5"></rect>
+        <text x="260" y="132" text-anchor="start" font-family="var(--font-mono)" font-weight="700" font-size="30" style="fill:var(--accent)">326</text>
+        <text x="260" y="188" text-anchor="start" font-family="var(--font-sans)" font-size="12" style="fill:var(--fg-muted)">trimmed construct fragment</text>
+      </svg>
+    </div>
+    <p class="support">Trimming to a usable fragment takes domain judgement — not just a sequence window.</p>
+  </section>
+
+  <!-- ===== Slide 8 — What's next ===== -->
+  <section class="slide" id="slide-8" data-n="8" aria-label="Slide 8">
+    <h1 class="headline">Open source. Pointed at the next gene.</h1>
+    <div class="cards" aria-hidden="true">
+      <div class="card"><div class="k">Near-term</div><div class="v">Multi-isoform support, batch intake</div></div>
+      <div class="card"><div class="k">Handoff</div><div class="v">Feeds constructs into BaseRead</div></div>
+      <div class="card"><div class="k">The ask</div><div class="v">Have a variant? No path yet?</div></div>
+    </div>
+    <p class="support mono">Reach us at genomainstitute.org.</p>
+  </section>
+
+</div>
+
+<div id="hint" role="status">← → space to move · F for fullscreen</div>
+
+<div id="rail" role="navigation" aria-label="Slide navigation">
+  <div id="segments"></div>
+  <span id="slideNum" class="mono">1 / 8</span>
+  <button class="iconbtn" id="themeToggle" type="button" aria-label="Toggle color theme">Theme</button>
+  <button class="iconbtn" id="fsToggle" type="button" aria-label="Toggle fullscreen">Fullscreen</button>
+</div>
+
+<script>
+const CASE_NAMED = true;
+
+const NAMED = {
+  byline: "Dr Francis Wong’s SPTAN1 c.6958A>G, p.(Arg2320Gly) — published Oct 2026, used with his agreement. Family in n-Lorem antisense assessment.",
+  note: "Nobody has tested which mechanism applies for this family — it needs purified wild-type and p.(Arg2320Gly) protein, which these constructs provide."
+};
+const ANON = {
+  byline: "A published de novo SPTAN1 variant in the C-terminal heterodimerisation repeats.",
+  note: "Nobody has tested which mechanism applies — it needs purified wild-type and variant protein, which these constructs provide."
+};
+const COPY = CASE_NAMED ? NAMED : ANON;
+
+(function(){
+"use strict";
+
+document.getElementById("bylineText").textContent = COPY.byline;
+document.getElementById("mechNote").textContent = COPY.note;
+
+var SLIDE_COUNT = 8;
+var slides = [];
+for (var i = 1; i <= SLIDE_COUNT; i++) slides.push(document.getElementById("slide-" + i));
+
+var segmentsHost = document.getElementById("segments");
+var segments = [];
+for (var s = 1; s <= SLIDE_COUNT; s++) {
+  (function(n){
+    var btn = document.createElement("button");
+    btn.className = "seg";
+    btn.type = "button";
+    btn.setAttribute("aria-label", "Go to slide " + n);
+    btn.addEventListener("click", function(){ navigate(n); });
+    segmentsHost.appendChild(btn);
+    segments.push(btn);
+  })(s);
+}
+
+var slideNumEl = document.getElementById("slideNum");
+var current = 1;
+
+function clampN(n){ return Math.max(1, Math.min(SLIDE_COUNT, n)); }
+
+function applySlide(n){
+  n = clampN(n);
+  current = n;
+  for (var i = 0; i < slides.length; i++) {
+    var active = (i + 1) === n;
+    slides[i].classList.toggle("active", active);
+  }
+  for (var j = 0; j < segments.length; j++) segments[j].classList.toggle("current", (j + 1) === n);
+  slideNumEl.textContent = n + " / " + SLIDE_COUNT;
+}
+
+function navigate(n){
+  n = clampN(n);
+  var hash = "#s" + n;
+  if (location.hash === hash) applySlide(n);
+  else location.hash = hash;
+}
+
+function readHash(){
+  var m = /^#s([1-8])$/.exec(location.hash);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+window.addEventListener("hashchange", function(){
+  var n = readHash();
+  applySlide(n || 1);
+});
+
+(function initRoute(){
+  var n = readHash();
+  if (n) applySlide(n);
+  else { applySlide(1); history.replaceState(null, "", "#s1"); }
+})();
+
+/* ---------------- keyboard ---------------- */
+document.addEventListener("keydown", function(e){
+  switch (e.key) {
+    case "ArrowRight": case "ArrowDown": case "PageDown": case " ": case "Enter":
+      e.preventDefault(); navigate(current + 1); break;
+    case "ArrowLeft": case "ArrowUp": case "PageUp": case "Backspace":
+      e.preventDefault(); navigate(current - 1); break;
+    case "Home":
+      e.preventDefault(); navigate(1); break;
+    case "End":
+      e.preventDefault(); navigate(SLIDE_COUNT); break;
+    case "f": case "F":
+      e.preventDefault(); toggleFullscreen(); break;
+  }
+});
+
+/* ---------------- click to advance ---------------- */
+document.getElementById("deck").addEventListener("click", function(e){
+  if (e.target.closest("a,button,input,select,textarea")) return;
+  var half = window.innerWidth / 2;
+  if (e.clientX >= half) navigate(current + 1);
+  else navigate(current - 1);
+});
+
+/* ---------------- fullscreen ---------------- */
+function toggleFullscreen(){
+  try {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){});
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+    }
+  } catch (e) { /* unsupported: fail silently */ }
+}
+document.getElementById("fsToggle").addEventListener("click", toggleFullscreen);
+
+/* ---------------- theme ---------------- */
+function applyTheme(mode){
+  if (mode === "light" || mode === "dark") document.documentElement.setAttribute("data-theme", mode);
+  else document.documentElement.removeAttribute("data-theme");
+}
+(function initTheme(){
+  var saved = null;
+  try { saved = localStorage.getItem("mrpitch:theme"); } catch (e) {}
+  applyTheme(saved);
+})();
+document.getElementById("themeToggle").addEventListener("click", function(){
+  var cur = document.documentElement.getAttribute("data-theme");
+  var next = cur === "dark" ? "light" : (cur === "light" ? null : "dark");
+  try { if (next) localStorage.setItem("mrpitch:theme", next); else localStorage.removeItem("mrpitch:theme"); } catch (e) {}
+  applyTheme(next);
+});
+
+/* ---------------- keyboard hint auto-fade ---------------- */
+var hint = document.getElementById("hint");
+setTimeout(function(){ hint.classList.add("hidden"); }, 4000);
+
+})();
+</script>
+</body>
+</html>
