@@ -766,6 +766,41 @@ function smallestContainingFeature(features, pos){
   return best;
 }
 
+// The collaborator's mutant-read repo (github.com/zsiddique/mutant-read) hit this same
+// bisection bug on real SPTAN1 data and worked around it with a one-off manual window
+// override rather than fixing the algorithm; this is the general fix, written fresh.
+// A proposed window that stops partway into a neighboring feature (any annotated
+// Domain/Repeat/Region/Motif, not just Repeat) is worse than one that swallows that
+// feature whole: a construct that bisects a domain can disrupt it structurally, while
+// a few extra flanking residues rarely do. So this only ever grows the window to fully
+// include a partially-overlapped feature, never shrinks it to exclude one — the window
+// is guaranteed to always include the variant's own containing feature by construction,
+// and shrinking could violate that. Iterates to a fixed point since absorbing one
+// feature can newly overlap another.
+function featureIsBisected(start, end, f){
+  var fullyContains = f.start >= start && f.end <= end;
+  var fullyExcluded = f.end < start || f.start > end;
+  return !fullyContains && !fullyExcluded;
+}
+function avoidBisection(start, end, features, seqLen){
+  var feats = features || [];
+  var guard = feats.length + 2;
+  for (var pass = 0; pass < guard; pass++) {
+    var changed = false;
+    for (var i = 0; i < feats.length; i++) {
+      var f = feats[i];
+      if (featureIsBisected(start, end, f)) {
+        if (f.start < start) { start = f.start; changed = true; }
+        if (f.end > end) { end = f.end; changed = true; }
+      }
+    }
+    if (!changed) break;
+  }
+  start = Math.max(1, start);
+  end = Math.min(seqLen, end);
+  return { start:start, end:end };
+}
+
 function proposeWindow(strategy, proteinPos, features, seqLen){
   var feats = features || [];
   var containing = smallestContainingFeature(feats, proteinPos);
@@ -801,8 +836,8 @@ function proposeWindow(strategy, proteinPos, features, seqLen){
     }
   }
 
-  start = Math.max(1, start);
-  end = Math.min(seqLen, end);
+  var guarded = avoidBisection(start, end, feats, seqLen);
+  start = guarded.start; end = guarded.end;
   if (end < start) end = start;
   return { start:start, end:end, containing:containing };
 }
@@ -1431,6 +1466,7 @@ var MR_EXPORTS = {
   TAGS: TAGS, ENZYMES: ENZYMES,
   aa1to3: aa1to3, reverseComplement: reverseComplement, gcContent: gcContent, wallaceTm: wallaceTm,
   nnTm: nnTm, parseVariant: parseVariant, inferAltFromC: inferAltFromC, proposeWindow: proposeWindow,
+  avoidBisection: avoidBisection, featureIsBisected: featureIsBisected,
   smallestContainingFeature: smallestContainingFeature, buildMutationRows: buildMutationRows,
   backtranslate: backtranslate, backtranslateSmart: backtranslateSmart, scanSites: scanSites, designMutagenicPrimer: designMutagenicPrimer,
   gibsonArms: gibsonArms, buildGenbank: buildGenbank, buildFasta: buildFasta, buildOligoCsvRows: buildOligoCsvRows,
@@ -1534,6 +1570,13 @@ function applyResolvedData(data, fromCache){
   setChip(els.resolveChip, "pass", fromCache ? "From cache" : "Resolved");
   els.resolveNote.textContent = (fromCache ? "Loaded from local cache (" + data.sequence.length + " aa). " : "") +
     state.proteinName + " — " + state.geneName + " — " + state.sequence.length + " aa.";
+  // The structure doesn't depend on the variant, so load it as soon as the target
+  // resolves rather than waiting on validation — a validation failure would otherwise
+  // leave this panel empty when it's most useful for spotting a numbering mismatch.
+  // loadStructure()'s fetch always resolves asynchronously, after runValidation() below
+  // has already updated state.window/state.proteinPos, so it picks up the right values
+  // without needing a second call once validation passes.
+  loadStructure();
   runValidation();
 }
 
@@ -1757,7 +1800,8 @@ function disableDownstream(){
   els.addMutRow.style.display = "none";
   els.outputsEmpty.style.display = "block";
   els.outputsBody.style.display = "none";
-  setChip(els.structureChip, "idle", "Idle");
+  // Structure load is independent of validation (see applyResolvedData) — don't
+  // clobber its chip here, it's tracking the AlphaFold fetch, not variant validity.
   setChip(els.outputsChip, "idle", "Idle");
 }
 
@@ -1772,7 +1816,9 @@ function proceedAfterValidation(){
   renderMutationPanel();
   renderDomainMap();
   els.buildBtn.disabled = false;
-  loadStructure();
+  // Model is already loading/loaded from applyResolvedData; just refresh the highlight
+  // with the now-known window/variant position rather than re-fetching it.
+  applyStructureHighlight();
 }
 
 /* ---------------- window strategy ---------------- */
@@ -1895,7 +1941,26 @@ function escapeXml(s){ return String(s).replace(/[<>&"]/g, function(c){ return (
 window.addEventListener("resize", function(){ /* SVG uses viewBox; no re-render needed */ });
 
 /* ---------------- 3Dmol structure viewer ---------------- */
+// Kept outside `state` since it's a live viewer handle, not serializable data.
+var structureViewerInstance = null;
+
+// Re-applies the window/variant highlight to an already-loaded model, e.g. after the
+// variant is (re)validated without re-resolving the target — no re-fetch needed.
+function applyStructureHighlight(){
+  if (!structureViewerInstance) return;
+  structureViewerInstance.setStyle({}, { cartoon: { color: "grey", opacity: 0.45 } });
+  if (state.window) {
+    structureViewerInstance.setStyle({ resi: state.window.start + "-" + state.window.end }, { cartoon: { color: "teal" } });
+  }
+  if (state.proteinPos) {
+    structureViewerInstance.setStyle({ resi: state.proteinPos }, { stick: { colorscheme: "red" }, sphere: { scale: 0.4, colorscheme: "red" } });
+  }
+  structureViewerInstance.zoomTo(state.window ? { resi: state.window.start + "-" + state.window.end } : {});
+  structureViewerInstance.render();
+}
+
 function loadStructure(){
+  structureViewerInstance = null;
   setChip(els.structureChip, "idle", "Loading…");
   els.structureViewer.innerHTML = "";
   if (typeof $3Dmol === "undefined") {
@@ -1908,15 +1973,8 @@ function loadStructure(){
   fetch(url).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
     .then(function(pdb){
       viewer.addModel(pdb, "pdb");
-      viewer.setStyle({}, { cartoon: { color: "grey", opacity: 0.45 } });
-      if (state.window) {
-        viewer.setStyle({ resi: state.window.start + "-" + state.window.end }, { cartoon: { color: "teal" } });
-      }
-      if (state.proteinPos) {
-        viewer.setStyle({ resi: state.proteinPos }, { stick: { colorscheme: "red" }, sphere: { scale: 0.4, colorscheme: "red" } });
-      }
-      viewer.zoomTo(state.window ? { resi: state.window.start + "-" + state.window.end } : {});
-      viewer.render();
+      structureViewerInstance = viewer;
+      applyStructureHighlight();
       setChip(els.structureChip, "pass", "AlphaFold DB model");
     })
     .catch(function(){

@@ -1,3 +1,10 @@
+# Playwright test tooling (mutantread/index.html testing only)
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

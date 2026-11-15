@@ -1,0 +1,11 @@
+{
+  "name": "genoma-site-tests",
+  "private": true,
+  "description": "Dev-only test tooling for mutantread/index.html. Does not affect the deployed static site.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1"
+  }
+}
