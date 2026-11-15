@@ -1969,8 +1969,17 @@ function loadStructure(){
     return;
   }
   var viewer = $3Dmol.createViewer(els.structureViewer, { backgroundColor: "white" });
-  var url = "https://alphafold.ebi.ac.uk/files/AF-" + state.accession + "-F1-model_v4.pdb";
-  fetch(url).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+  // AlphaFold DB bumps its global model version periodically (e.g. v4 -> v6), which
+  // silently 404s a hardcoded file URL — ask the prediction API for the current one
+  // instead of guessing a version suffix.
+  var apiUrl = "https://alphafold.ebi.ac.uk/api/prediction/" + encodeURIComponent(state.accession);
+  fetch(apiUrl).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function(entries){
+      var pdbUrl = entries && entries[0] && entries[0].pdbUrl;
+      if (!pdbUrl) throw new Error("No AlphaFold model for this accession");
+      return fetch(pdbUrl);
+    })
+    .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
     .then(function(pdb){
       viewer.addModel(pdb, "pdb");
       structureViewerInstance = viewer;

@@ -6,7 +6,8 @@ const { test, expect } = require('@playwright/test');
 // accession, which is the actually-supported path - not a c.-transcript resolution.
 
 const UNIPROT_URL = 'https://rest.uniprot.org/uniprotkb/TESTACC1.json';
-const ALPHAFOLD_URL = 'https://alphafold.ebi.ac.uk/files/AF-TESTACC1-F1-model_v4.pdb';
+const ALPHAFOLD_API_URL = 'https://alphafold.ebi.ac.uk/api/prediction/TESTACC1';
+const ALPHAFOLD_PDB_URL = 'https://alphafold.ebi.ac.uk/files/AF-TESTACC1-F1-model_v6.pdb';
 const THREEDMOL_URL = 'https://cdn.jsdelivr.net/npm/3dmol@2.0.4/build/3Dmol-min.js';
 
 const SEQ_LEN = 250;
@@ -61,7 +62,15 @@ async function mockCommonRoutes(page) {
       body: JSON.stringify(UNIPROT_BODY)
     })
   );
-  await page.route(ALPHAFOLD_URL, (route) =>
+  await page.route(ALPHAFOLD_API_URL, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify([{ pdbUrl: ALPHAFOLD_PDB_URL }])
+    })
+  );
+  await page.route(ALPHAFOLD_PDB_URL, (route) =>
     route.fulfill({
       status: 200,
       contentType: 'text/plain',
