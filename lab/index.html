@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Lab Floor Planner</title>
+<style>
+  :root{
+    --green:#234A3A;
+    --accent:#6BB98F;
+    --mint:#B9EBCD;
+    --accent-light:#A8E0C0;
+    --paper:#F7F5F0;
+    --ink:#15241e;
+
+    --bg: var(--paper);
+    --panel-bg: #ffffff;
+    --text: var(--ink);
+    --text-dim: #51635a;
+    --border: #d9d4c8;
+    --room-bg: #ffffff;
+    --room-border: var(--green);
+    --grid-line: rgba(21,36,30,0.08);
+    --bench-fill: var(--accent);
+    --bench-border: var(--green);
+    --benchtop-fill: var(--accent-light);
+    --benchtop-border: var(--accent);
+    --floor-fill: #cfe3f2;
+    --floor-border: #5c86a8;
+    --warn-bg: #fff4d6;
+    --warn-border: #d8a93a;
+    --warn-text: #6b4e0f;
+    --bad-bg: #fbe1df;
+    --bad-border: #c65b52;
+    --bad-text: #7a2e27;
+    --ok-bg: var(--mint);
+    --ok-border: var(--accent);
+    --ok-text: #1b4430;
+    --chip-bg: #eef1ec;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1713;
+      --panel-bg:#17221c;
+      --text:#eaf3ec;
+      --text-dim:#9fb3a7;
+      --border:#2b3a32;
+      --room-bg:#122019;
+      --room-border: var(--accent-light);
+      --grid-line: rgba(185,235,205,0.10);
+      --bench-fill:#3d7a5c;
+      --bench-border: var(--accent-light);
+      --benchtop-fill:#4f9372;
+      --benchtop-border: var(--mint);
+      --floor-fill:#2b3f52;
+      --floor-border:#7fa8c8;
+      --warn-bg:#3a3012;
+      --warn-border:#caa23e;
+      --warn-text:#f3d98a;
+      --bad-bg:#3c1e1b;
+      --bad-border:#c65b52;
+      --bad-text:#f3b7b0;
+      --ok-bg:#163a2a;
+      --ok-border: var(--accent-light);
+      --ok-text:#c8f0da;
+      --chip-bg:#1d2a23;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1713;
+    --panel-bg:#17221c;
+    --text:#eaf3ec;
+    --text-dim:#9fb3a7;
+    --border:#2b3a32;
+    --room-bg:#122019;
+    --room-border: var(--accent-light);
+    --grid-line: rgba(185,235,205,0.10);
+    --bench-fill:#3d7a5c;
+    --bench-border: var(--accent-light);
+    --benchtop-fill:#4f9372;
+    --benchtop-border: var(--mint);
+    --floor-fill:#2b3f52;
+    --floor-border:#7fa8c8;
+    --warn-bg:#3a3012;
+    --warn-border:#caa23e;
+    --warn-text:#f3d98a;
+    --bad-bg:#3c1e1b;
+    --bad-border:#c65b52;
+    --bad-text:#f3b7b0;
+    --ok-bg:#163a2a;
+    --ok-border: var(--accent-light);
+    --ok-text:#c8f0da;
+    --chip-bg:#1d2a23;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; max-width:100%; overflow-x:hidden; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height:1.4;
+  }
+  a{ color: var(--accent); }
+
+  header.top{
+    display:flex; align-items:center; gap:.75rem; justify-content:space-between;
+    padding:.75rem 1rem; background: var(--green); color:#fff;
+    flex-wrap:wrap;
+  }
+  header.top .brand{ display:flex; align-items:center; gap:.6rem; font-weight:700; }
+  header.top .brand .dot{ width:10px;height:10px;border-radius:50%; background: var(--mint); }
+  header.top .meta{ font-size:.8rem; color: var(--mint); opacity:.9; }
+  button.themeToggle{
+    background: rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3);
+    border-radius:6px; padding:.3rem .6rem; font-size:.8rem; cursor:pointer;
+  }
+  button.themeToggle:hover{ background: rgba(255,255,255,0.2); }
+
+  nav.tabs{
+    display:flex; gap:.25rem; padding:.5rem 1rem 0; background: var(--bg);
+    border-bottom:1px solid var(--border); flex-wrap:wrap;
+  }
+  nav.tabs button{
+    border:1px solid var(--border); background: var(--panel-bg); color: var(--text);
+    padding:.5rem .9rem; border-radius:8px 8px 0 0; cursor:pointer; font-size:.9rem;
+    border-bottom:none; position:relative; top:1px;
+  }
+  nav.tabs button[aria-selected="true"]{
+    background: var(--panel-bg); border-color: var(--accent); color: var(--green);
+    font-weight:700; box-shadow: inset 0 3px 0 var(--accent);
+  }
+  main{ padding:1rem; max-width:1400px; margin:0 auto; }
+  .tabpanel{ display:none; }
+  .tabpanel.active{ display:block; }
+
+  .planner{
+    display:grid;
+    grid-template-columns: 220px minmax(0,1fr) 280px;
+    gap:1rem;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .planner{ grid-template-columns: 1fr; }
+  }
+
+  .panelbox{
+    background: var(--panel-bg); border:1px solid var(--border); border-radius:10px;
+    padding:.75rem; min-width:0;
+  }
+  .panelbox h2{ margin:.1rem 0 .6rem; font-size:.95rem; color: var(--green); }
+  :root[data-theme="dark"] .panelbox h2{ color: var(--accent-light); }
+
+  .palette .group{ margin-bottom:.8rem; }
+  .palette .group h3{ margin:0 0 .35rem; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color: var(--text-dim); }
+  .palette .grid{ display:flex; flex-wrap:wrap; gap:.4rem; }
+  @media (max-width: 980px){
+    .palette .grid{ flex-wrap:nowrap; overflow-x:auto; padding-bottom:.25rem; }
+    .palette .group{ min-width:max-content; }
+  }
+  .paletteItem{
+    border:1px solid var(--border); background: var(--chip-bg); color: var(--text);
+    border-radius:8px; padding:.4rem .55rem; font-size:.78rem; cursor:pointer; text-align:left;
+    white-space:nowrap;
+  }
+  .paletteItem:hover{ border-color: var(--accent); }
+  .paletteItem .dim{ display:block; color: var(--text-dim); font-size:.7rem; }
+
+  .stage-wrap{ min-width:0; }
+  .toolbar{ display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.6rem; }
+  .toolbar button{
+    border:1px solid var(--border); background: var(--panel-bg); color: var(--text);
+    padding:.45rem .7rem; border-radius:8px; cursor:pointer; font-size:.82rem;
+  }
+  .toolbar button.primary{ background: var(--accent); border-color: var(--green); color:#0e2117; font-weight:700; }
+  .toolbar button:hover{ border-color: var(--accent); }
+
+  .roomOuter{
+    width:100%;
+    background: var(--room-bg);
+    border-radius:8px;
+    padding: 8px;
+  }
+  #room{
+    position:relative;
+    width:100%;
+    aspect-ratio: 124.8 / 110.6;
+    background-color: var(--room-bg);
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 9.6154% 10.8499%;
+    border: 3px solid var(--room-border);
+    border-radius:4px;
+    overflow:hidden;
+    touch-action:none;
+  }
+  .item{
+    position:absolute;
+    border-radius:3px;
+    font-size:.62rem;
+    color: var(--ink);
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:2px;
+    cursor:grab;
+    user-select:none;
+    touch-action:none;
+    line-height:1.15;
+    overflow:hidden;
+  }
+  .item.bench{ background: var(--bench-fill); border:1px solid var(--bench-border); color:#0e2117; z-index:2; }
+  .item.floor{ background: var(--floor-fill); border:2px solid var(--floor-border); z-index:2; }
+  .item.benchtop{ background: var(--benchtop-fill); border:1px solid var(--benchtop-border); z-index:3; font-weight:600; }
+  .item.selected{ outline:3px solid var(--green); outline-offset:1px; }
+  :root[data-theme="dark"] .item.selected{ outline-color: var(--mint); }
+  .item.blocked{ outline:3px solid var(--bad-border); outline-offset:1px; }
+  .item.dragging{ cursor:grabbing; opacity:.85; }
+
+  .clearanceZone{
+    position:absolute; z-index:1; pointer-events:none;
+    border:2px dashed var(--ok-border); background: rgba(107,185,143,0.18);
+    border-radius:2px;
+  }
+  .clearanceZone.blocked{ border-color: var(--bad-border); background: rgba(198,91,82,0.22); }
+
+  .doorMarker{
+    position:absolute; z-index:4; background: var(--paper);
+    border:2px solid var(--ink); cursor:grab; touch-action:none;
+  }
+  .doorMarker::after{
+    content:"DOOR"; position:absolute; font-size:.55rem; font-weight:700; color: var(--ink);
+    white-space:nowrap; left:50%; top:50%; transform:translate(-50%,-50%);
+  }
+
+  .selectedBar{
+    display:flex; align-items:center; gap:.5rem; margin-top:.6rem; padding:.5rem .7rem;
+    background: var(--chip-bg); border:1px solid var(--border); border-radius:8px; font-size:.82rem;
+  }
+  .selectedBar button{
+    border:1px solid var(--border); background: var(--panel-bg); color: var(--text);
+    padding:.3rem .6rem; border-radius:6px; cursor:pointer; font-size:.78rem;
+  }
+  .selectedBar .spacer{ flex:1; }
+  .hint{ color: var(--text-dim); font-size:.75rem; margin-top:.5rem; }
+
+  .stats dl{ margin:0; }
+  .stats .row{ display:flex; justify-content:space-between; gap:.5rem; padding:.3rem 0; border-bottom:1px dashed var(--border); font-size:.85rem; }
+  .stats .row:last-child{ border-bottom:none; }
+  .stats .row b{ color: var(--green); }
+  :root[data-theme="dark"] .stats .row b{ color: var(--accent-light); }
+
+  .flags{ margin-top:.75rem; display:flex; flex-direction:column; gap:.4rem; }
+  .flag{ border-radius:7px; padding:.5rem .6rem; font-size:.8rem; border:1px solid; }
+  .flag.ok{ background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
+  .flag.warn{ background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+  .flag.bad{ background: var(--bad-bg); border-color: var(--bad-border); color: var(--bad-text); }
+
+  table.specs{ width:100%; border-collapse:collapse; font-size:.85rem; }
+  table.specs th, table.specs td{ text-align:left; padding:.45rem .5rem; border-bottom:1px solid var(--border); }
+  table.specs th{ color: var(--green); }
+  :root[data-theme="dark"] table.specs th{ color: var(--accent-light); }
+  table.specs tr:hover td{ background: var(--chip-bg); }
+
+  model-viewer{ width:100%; height:65vh; background: var(--panel-bg); border-radius:10px; border:1px solid var(--border); }
+  .scanNote{ font-size:.82rem; color: var(--text-dim); margin-top:.5rem; }
+
+  @media print{
+    header.top, nav.tabs, .toolbar, .palette, .selectedBar, .hint, .scanNote{ display:none !important; }
+    .planner{ grid-template-columns: 1fr 260px; }
+    body{ background:#fff; color:#000; }
+    .panelbox{ border-color:#000; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="dot"></span> Genoma &middot; Lab Floor Planner</div>
+  <div class="meta">Interior 124.8&Prime; &times; 110.6&Prime; &middot; ~96 sq ft &middot; internal tool, not indexed</div>
+  <button class="themeToggle" id="themeToggle" type="button">Theme: System</button>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" id="tabbtn-plan" aria-selected="true" aria-controls="tab-plan">Floor plan</button>
+  <button role="tab" id="tabbtn-3d" aria-selected="false" aria-controls="tab-3d">3D scan</button>
+  <button role="tab" id="tabbtn-specs" aria-selected="false" aria-controls="tab-specs">Equipment specs</button>
+</nav>
+
+<main>
+
+  <section id="tab-plan" class="tabpanel active">
+    <div class="planner">
+
+      <aside class="panelbox palette">
+        <h2>Equipment</h2>
+        <div id="paletteHost"></div>
+        <p class="hint">Click an item to add it. Click a placed item to select; R rotates, Delete removes. Drag to move &mdash; snaps to 3&Prime;.</p>
+      </aside>
+
+      <div class="stage-wrap">
+        <div class="toolbar">
+          <button id="btnSuggested" type="button">Suggested starting layout</button>
+          <button id="btnClear" type="button">Clear</button>
+          <button id="btnPrint" type="button">Print</button>
+          <button id="btnAddDoor" class="primary" type="button" style="display:none;">Add door</button>
+        </div>
+        <div class="panelbox roomOuter">
+          <div id="room"></div>
+        </div>
+        <div class="selectedBar" id="selectedBar" style="display:none;">
+          <span id="selectedLabel"></span>
+          <span class="spacer"></span>
+          <button id="btnRotateSel" type="button">Rotate (R)</button>
+          <button id="btnDeleteSel" type="button">Delete</button>
+        </div>
+        <p class="hint">Drag the door marker to any wall to set its position; a 30&Prime; clearance zone projects inward from it.</p>
+      </div>
+
+      <aside class="panelbox stats">
+        <h2>Live stats</h2>
+        <div id="statsHost"></div>
+        <div class="flags" id="flagsHost"></div>
+      </aside>
+
+    </div>
+  </section>
+
+  <section id="tab-3d" class="tabpanel">
+    <div class="panelbox">
+      <h2>3D scan</h2>
+      <model-viewer id="scanViewer" camera-controls auto-rotate-delay="0" shadow-intensity="1"></model-viewer>
+      <p class="scanNote">Loads <code>./lab-scan.glb</code> the first time this tab is opened. Drag to orbit, scroll to zoom.</p>
+    </div>
+  </section>
+
+  <section id="tab-specs" class="tabpanel">
+    <div class="panelbox">
+      <h2>Equipment specs</h2>
+      <table class="specs" id="specsTable">
+        <thead><tr><th>Item</th><th>Group</th><th>Width</th><th>Depth</th><th>Notes</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Room geometry (from 3D scan - do not change) ----------
+  var ROOM = { width: 124.8, depth: 110.6 }; // inches, interior
+  var SNAP = 3; // inches
+  var DOOR_WIDTH = 36; // inches, standard door
+  var CLEARANCE_DEPTH = 30; // inches, inboard from the door
+
+  // ---------- Equipment catalog ----------
+  var CATALOG = [
+    { id:"bench8",        name:"Bench 8 ft",         group:"bench",    w:96, d:24 },
+    { id:"bench6",        name:"Bench 6 ft",         group:"bench",    w:72, d:24 },
+    { id:"bench4",        name:"Bench 4 ft",         group:"bench",    w:48, d:24 },
+    { id:"benchCorner",   name:"Corner 30 in",       group:"bench",    w:30, d:24 },
+
+    { id:"thermocycler",  name:"Thermocycler",       group:"benchtop", w:10, d:19 },
+    { id:"microcentrifuge",name:"Microcentrifuge",   group:"benchtop", w:10, d:14 },
+    { id:"shakingIncubator",name:"Shaking incubator",group:"benchtop", w:22, d:24, highDraw:true },
+    { id:"gelBox",        name:"Gel box",            group:"benchtop", w:12, d:10 },
+    { id:"powerSupply",   name:"Power supply",       group:"benchtop", w:10, d:8 },
+    { id:"blueLight",     name:"Blue-light box",     group:"benchtop", w:10, d:8 },
+    { id:"dryBath",       name:"Dry bath",           group:"benchtop", w:10, d:8 },
+    { id:"vortex",        name:"Vortex",             group:"benchtop", w:6,  d:6 },
+    { id:"pipetteStand",  name:"Pipette stand",      group:"benchtop", w:6,  d:4 },
+    { id:"qpcr",          name:"qPCR (phase 2)",     group:"benchtop", w:14, d:20 },
+
+    { id:"fridge",        name:"Fridge 4°C",    group:"floor",    w:24, d:24, highDraw:true },
+    { id:"freezer",       name:"Freezer -20°C", group:"floor",    w:32, d:22, highDraw:true },
+    { id:"stool",         name:"Stool",              group:"floor",    w:18, d:18 },
+    { id:"waste",         name:"Waste/sharps",       group:"floor",    w:14, d:14 },
+    { id:"eyewash",       name:"Eyewash station",    group:"floor",    w:14, d:12 }
+  ];
+  var CATALOG_BY_ID = {};
+  CATALOG.forEach(function(c){ CATALOG_BY_ID[c.id] = c; });
+
+  var GROUP_LABELS = { bench:"Bench", benchtop:"On the bench", floor:"On the floor" };
+
+  // ---------- State ----------
+  var STORAGE_KEY = "genoma-lab-planner-v1";
+  var THEME_KEY = "genoma-lab-planner-theme";
+  var state = {
+    items: [],   // { uid, catalogId, x, y, rotated }
+    door: { wall: "bottom", pos: 62 } // pos = inches along the wall's axis
+  };
+  var selectedUid = null;
+  var uidCounter = 1;
+
+  function nextUid(){ return "i" + (uidCounter++) + "_" + Date.now().toString(36); }
+
+  function getDims(item){
+    var cat = CATALOG_BY_ID[item.catalogId];
+    if (!cat) return { w:0, d:0 };
+    return item.rotated ? { w:cat.d, d:cat.w } : { w:cat.w, d:cat.d };
+  }
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  function snap(v){ return Math.round(v / SNAP) * SNAP; }
+
+  // ---------- Persistence (best-effort; must never break the app) ----------
+  function saveState(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: state.items, door: state.door }));
+    } catch (e) { /* storage unavailable (private mode, quota, etc.) - degrade silently */ }
+  }
+  function loadState(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      var parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.items)) {
+        state.items = parsed.items.filter(function(it){ return CATALOG_BY_ID[it.catalogId]; });
+        var maxN = 0;
+        state.items.forEach(function(it){
+          var m = /^i(\d+)_/.exec(it.uid || "");
+          if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+        });
+        uidCounter = maxN + 1;
+      }
+      if (parsed && parsed.door && typeof parsed.door.pos === "number") {
+        state.door = parsed.door;
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+  function loadTheme(){
+    try { return localStorage.getItem(THEME_KEY) || "system"; } catch (e) { return "system"; }
+  }
+  function saveTheme(v){
+    try { localStorage.setItem(THEME_KEY, v); } catch (e) { /* ignore */ }
+  }
+
+  // ---------- Geometry helpers ----------
+  function rectsOverlap(a, b){
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.d && a.y + a.d > b.y;
+  }
+
+  function doorClearanceRect(door){
+    var half = DOOR_WIDTH / 2;
+    if (door.wall === "top" || door.wall === "bottom") {
+      var x = clamp(door.pos - half, 0, ROOM.width - DOOR_WIDTH);
+      var y = door.wall === "top" ? 0 : ROOM.depth - CLEARANCE_DEPTH;
+      return { x:x, y:y, w:DOOR_WIDTH, d:CLEARANCE_DEPTH };
+    } else {
+      var yy = clamp(door.pos - half, 0, ROOM.depth - DOOR_WIDTH);
+      var xx = door.wall === "left" ? 0 : ROOM.width - CLEARANCE_DEPTH;
+      return { x:xx, y:yy, w:CLEARANCE_DEPTH, d:DOOR_WIDTH };
+    }
+  }
+
+  function nearestWall(x, y){
+    var dTop = y, dBottom = ROOM.depth - y, dLeft = x, dRight = ROOM.width - x;
+    var min = Math.min(dTop, dBottom, dLeft, dRight);
+    if (min === dTop) return "top";
+    if (min === dBottom) return "bottom";
+    if (min === dLeft) return "left";
+    return "right";
+  }
+
+  // ---------- Suggested starting layout ----------
+  function suggestedLayout(){
+    var mk = function(catalogId, x, y, rotated){
+      return { uid: nextUid(), catalogId: catalogId, x:x, y:y, rotated: !!rotated };
+    };
+    return [
+      mk("bench8", 4, 4),
+      mk("thermocycler", 10, 6),
+      mk("microcentrifuge", 26, 6),
+      mk("gelBox", 40, 6),
+      mk("powerSupply", 56, 6),
+      mk("blueLight", 68, 6),
+      mk("pipetteStand", 80, 6),
+      mk("vortex", 88, 6),
+
+      mk("bench6", 4, 30, true),
+      mk("shakingIncubator", 4, 32),
+      mk("qpcr", 6, 60),
+      mk("dryBath", 8, 84),
+
+      mk("fridge", 34, 84),
+      mk("freezer", 60, 86),
+      mk("stool", 96, 84),
+      mk("waste", 100, 30),
+      mk("eyewash", 100, 46)
+    ];
+  }
+
+  // ---------- Rendering: palette ----------
+  var paletteHost = document.getElementById("paletteHost");
+  function renderPalette(){
+    var groups = ["bench", "benchtop", "floor"];
+    var html = "";
+    groups.forEach(function(g){
+      html += '<div class="group"><h3>' + GROUP_LABELS[g] + '</h3><div class="grid">';
+      CATALOG.filter(function(c){ return c.group === g; }).forEach(function(c){
+        html += '<button class="paletteItem" type="button" data-catalog="' + c.id + '">' +
+          c.name + '<span class="dim">' + c.w + '&Prime; &times; ' + c.d + '&Prime;</span></button>';
+      });
+      html += '</div></div>';
+    });
+    paletteHost.innerHTML = html;
+    paletteHost.querySelectorAll(".paletteItem").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        addItem(btn.getAttribute("data-catalog"));
+      });
+    });
+  }
+
+  function addItem(catalogId){
+    var cat = CATALOG_BY_ID[catalogId];
+    if (!cat) return;
+    var count = state.items.filter(function(it){ return it.catalogId === catalogId; }).length;
+    var offset = (count % 6) * 6;
+    var x = clamp(6 + offset, 0, Math.max(0, ROOM.width - cat.w));
+    var y = clamp(6 + offset, 0, Math.max(0, ROOM.depth - cat.d));
+    var item = { uid: nextUid(), catalogId: catalogId, x:x, y:y, rotated:false };
+    state.items.push(item);
+    selectedUid = item.uid;
+    saveState();
+    renderRoom();
+    renderStats();
+  }
+
+  // ---------- Rendering: room ----------
+  var room = document.getElementById("room");
+
+  function pctX(v){ return (v / ROOM.width * 100) + "%"; }
+  function pctY(v){ return (v / ROOM.depth * 100) + "%"; }
+
+  function renderRoom(){
+    room.innerHTML = "";
+
+    // Door clearance zone (behind items, above grid)
+    var clearance = doorClearanceRect(state.door);
+    var blocked = state.items.some(function(it){
+      var dims = getDims(it);
+      return rectsOverlap({ x:it.x, y:it.y, w:dims.w, d:dims.d }, clearance);
+    });
+    var zoneEl = document.createElement("div");
+    zoneEl.className = "clearanceZone" + (blocked ? " blocked" : "");
+    zoneEl.style.left = pctX(clearance.x);
+    zoneEl.style.top = pctY(clearance.y);
+    zoneEl.style.width = pctX(clearance.w);
+    zoneEl.style.height = pctY(clearance.d);
+    room.appendChild(zoneEl);
+
+    // Items: bench, then floor, then benchtop on top
+    var order = { bench:0, floor:1, benchtop:2 };
+    var sorted = state.items.slice().sort(function(a, b){
+      var ca = CATALOG_BY_ID[a.catalogId], cb = CATALOG_BY_ID[b.catalogId];
+      return order[ca.group] - order[cb.group];
+    });
+    sorted.forEach(function(it){
+      var cat = CATALOG_BY_ID[it.catalogId];
+      var dims = getDims(it);
+      var isBlocked = rectsOverlap({ x:it.x, y:it.y, w:dims.w, d:dims.d }, clearance);
+      var el = document.createElement("div");
+      el.className = "item " + cat.group + (it.uid === selectedUid ? " selected" : "") + (isBlocked ? " blocked" : "");
+      el.style.left = pctX(it.x);
+      el.style.top = pctY(it.y);
+      el.style.width = pctX(dims.w);
+      el.style.height = pctY(dims.d);
+      el.textContent = cat.name;
+      el.setAttribute("data-uid", it.uid);
+      attachItemDrag(el, it);
+      room.appendChild(el);
+    });
+
+    // Door marker
+    var doorEl = document.createElement("div");
+    doorEl.className = "doorMarker";
+    styleDoorEl(doorEl);
+    attachDoorDrag(doorEl, zoneEl);
+    room.appendChild(doorEl);
+
+    renderSelectedBar();
+  }
+
+  // Updates an existing door marker element in place (used both on initial
+  // render and during drag) - never recreate it mid-drag, or the element
+  // holding pointer capture disappears and the drag silently stops.
+  function styleDoorEl(el){
+    var half = DOOR_WIDTH / 2;
+    el.style.left = ""; el.style.top = ""; el.style.right = ""; el.style.bottom = "";
+    if (state.door.wall === "top" || state.door.wall === "bottom") {
+      el.style.left = pctX(clamp(state.door.pos - half, 0, ROOM.width - DOOR_WIDTH));
+      el.style.width = pctX(DOOR_WIDTH);
+      el.style.height = "7px";
+      if (state.door.wall === "top") el.style.top = "-3px"; else el.style.bottom = "-3px";
+    } else {
+      el.style.top = pctY(clamp(state.door.pos - half, 0, ROOM.depth - DOOR_WIDTH));
+      el.style.height = pctY(DOOR_WIDTH);
+      el.style.width = "7px";
+      if (state.door.wall === "left") el.style.left = "-3px"; else el.style.right = "-3px";
+    }
+  }
+
+  // Same idea for the clearance zone overlay: restyle in place during drag.
+  function styleClearanceEl(el){
+    var r = doorClearanceRect(state.door);
+    var blocked = state.items.some(function(it){
+      var d = getDims(it);
+      return rectsOverlap({ x:it.x, y:it.y, w:d.w, d:d.d }, r);
+    });
+    el.style.left = pctX(r.x);
+    el.style.top = pctY(r.y);
+    el.style.width = pctX(r.w);
+    el.style.height = pctY(r.d);
+    el.classList.toggle("blocked", blocked);
+  }
+
+  // ---------- Dragging: items ----------
+  function attachItemDrag(el, item){
+    var dragging = false;
+    var startClientX, startClientY, startX, startY, rect, ppi;
+
+    el.addEventListener("pointerdown", function(ev){
+      dragging = false;
+      startClientX = ev.clientX; startClientY = ev.clientY;
+      startX = item.x; startY = item.y;
+      rect = room.getBoundingClientRect();
+      ppi = rect.width / ROOM.width; // px-per-inch, derived from current container width
+      el.setPointerCapture(ev.pointerId);
+      // Select without a full re-render: rebuilding the DOM here would
+      // discard this element mid-gesture and silently end the drag.
+      selectedUid = item.uid;
+      room.querySelectorAll(".item.selected").forEach(function(o){ o.classList.remove("selected"); });
+      el.classList.add("selected");
+      renderSelectedBar();
+    });
+    el.addEventListener("pointermove", function(ev){
+      if (!el.hasPointerCapture || !el.hasPointerCapture(ev.pointerId)) return;
+      var dxIn = (ev.clientX - startClientX) / ppi;
+      var dyIn = (ev.clientY - startClientY) / ppi;
+      if (!dragging && (Math.abs(dxIn) > 1 || Math.abs(dyIn) > 1)) dragging = true;
+      if (!dragging) return;
+      var dims = getDims(item);
+      var nx = snap(clamp(startX + dxIn, 0, Math.max(0, ROOM.width - dims.w)));
+      var ny = snap(clamp(startY + dyIn, 0, Math.max(0, ROOM.depth - dims.d)));
+      item.x = nx; item.y = ny;
+      el.classList.add("dragging");
+      el.style.left = pctX(item.x);
+      el.style.top = pctY(item.y);
+      updateBlockedStyling();
+    });
+    function finish(ev){
+      el.classList.remove("dragging");
+      if (dragging) { saveState(); renderStats(); }
+      dragging = false;
+      renderRoom();
+      renderStats();
+    }
+    el.addEventListener("pointerup", finish);
+    el.addEventListener("pointercancel", finish);
+  }
+
+  function updateBlockedStyling(){
+    var clearance = doorClearanceRect(state.door);
+    room.querySelectorAll(".item").forEach(function(el){
+      var uid = el.getAttribute("data-uid");
+      var it = state.items.find(function(i){ return i.uid === uid; });
+      if (!it) return;
+      var dims = getDims(it);
+      var isBlocked = rectsOverlap({ x:it.x, y:it.y, w:dims.w, d:dims.d }, clearance);
+      el.classList.toggle("blocked", isBlocked);
+    });
+  }
+
+  // ---------- Dragging: door ----------
+  // zoneEl is restyled in place alongside the marker itself - never call
+  // renderRoom() from this pointermove handler, or the element holding
+  // pointer capture gets torn down and the drag stops dead.
+  function attachDoorDrag(el, zoneEl){
+    el.addEventListener("pointerdown", function(ev){
+      el.setPointerCapture(ev.pointerId);
+    });
+    el.addEventListener("pointermove", function(ev){
+      if (!el.hasPointerCapture || !el.hasPointerCapture(ev.pointerId)) return;
+      var rect = room.getBoundingClientRect();
+      var xIn = clamp((ev.clientX - rect.left) / rect.width * ROOM.width, 0, ROOM.width);
+      var yIn = clamp((ev.clientY - rect.top) / rect.height * ROOM.depth, 0, ROOM.depth);
+      var wall = nearestWall(xIn, yIn);
+      var pos = (wall === "top" || wall === "bottom") ? xIn : yIn;
+      var length = (wall === "top" || wall === "bottom") ? ROOM.width : ROOM.depth;
+      pos = clamp(pos, DOOR_WIDTH / 2, length - DOOR_WIDTH / 2);
+      state.door = { wall: wall, pos: pos };
+      styleDoorEl(el);
+      styleClearanceEl(zoneEl);
+      updateBlockedStyling();
+    });
+    function finish(ev){ saveState(); renderRoom(); renderStats(); }
+    el.addEventListener("pointerup", finish);
+    el.addEventListener("pointercancel", finish);
+  }
+
+  // ---------- Selection bar / keyboard ----------
+  function renderSelectedBar(){
+    var bar = document.getElementById("selectedBar");
+    var label = document.getElementById("selectedLabel");
+    var item = state.items.find(function(i){ return i.uid === selectedUid; });
+    if (!item) { bar.style.display = "none"; return; }
+    var cat = CATALOG_BY_ID[item.catalogId];
+    var dims = getDims(item);
+    bar.style.display = "flex";
+    label.textContent = "Selected: " + cat.name + " (" + dims.w + "″ × " + dims.d + "″)";
+  }
+
+  function rotateSelected(){
+    var item = state.items.find(function(i){ return i.uid === selectedUid; });
+    if (!item) return;
+    var cat = CATALOG_BY_ID[item.catalogId];
+    var newRotated = !item.rotated;
+    var newW = newRotated ? cat.d : cat.w;
+    var newD = newRotated ? cat.w : cat.d;
+    item.x = clamp(item.x, 0, Math.max(0, ROOM.width - newW));
+    item.y = clamp(item.y, 0, Math.max(0, ROOM.depth - newD));
+    item.rotated = newRotated;
+    saveState();
+    renderRoom();
+    renderStats();
+  }
+  function deleteSelected(){
+    if (!selectedUid) return;
+    state.items = state.items.filter(function(i){ return i.uid !== selectedUid; });
+    selectedUid = null;
+    saveState();
+    renderRoom();
+    renderStats();
+  }
+
+  document.getElementById("btnRotateSel").addEventListener("click", rotateSelected);
+  document.getElementById("btnDeleteSel").addEventListener("click", deleteSelected);
+
+  document.addEventListener("keydown", function(ev){
+    var tag = (document.activeElement && document.activeElement.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if (!selectedUid) return;
+    if (ev.key === "r" || ev.key === "R") { rotateSelected(); }
+    else if (ev.key === "Delete" || ev.key === "Backspace") { ev.preventDefault(); deleteSelected(); }
+  });
+
+  room.addEventListener("pointerdown", function(ev){
+    if (ev.target === room) { selectedUid = null; renderRoom(); }
+  });
+
+  // ---------- Stats & warnings ----------
+  var statsHost = document.getElementById("statsHost");
+  var flagsHost = document.getElementById("flagsHost");
+
+  function renderStats(){
+    var roomArea = ROOM.width * ROOM.depth / 144;
+
+    var benchItems = state.items.filter(function(i){ return CATALOG_BY_ID[i.catalogId].group === "bench"; });
+    var floorItems = state.items.filter(function(i){ return CATALOG_BY_ID[i.catalogId].group === "floor"; });
+    var benchtopItems = state.items.filter(function(i){ return CATALOG_BY_ID[i.catalogId].group === "benchtop"; });
+
+    var footprintArea = benchItems.concat(floorItems).reduce(function(sum, i){
+      var d = getDims(i); return sum + (d.w * d.d) / 144;
+    }, 0);
+
+    var benchTopArea = benchItems.reduce(function(sum, i){
+      var c = CATALOG_BY_ID[i.catalogId]; return sum + (c.w * c.d) / 144;
+    }, 0);
+    var benchtopCoveredArea = benchtopItems.reduce(function(sum, i){
+      var c = CATALOG_BY_ID[i.catalogId]; return sum + (c.w * c.d) / 144;
+    }, 0);
+    var benchTopPct = benchTopArea > 0 ? (benchtopCoveredArea / benchTopArea * 100) : null;
+
+    var benchLinearFt = benchItems.reduce(function(sum, i){
+      var c = CATALOG_BY_ID[i.catalogId]; return sum + c.w;
+    }, 0) / 12;
+
+    var itemCount = state.items.length;
+    var footprintPct = roomArea > 0 ? (footprintArea / roomArea * 100) : 0;
+    var clearFloor = roomArea - footprintArea;
+
+    var highDrawCount = state.items.filter(function(i){ return !!CATALOG_BY_ID[i.catalogId].highDraw; }).length;
+
+    var clearance = doorClearanceRect(state.door);
+    var doorBlocked = state.items.some(function(it){
+      var dims = getDims(it);
+      return rectsOverlap({ x:it.x, y:it.y, w:dims.w, d:dims.d }, clearance);
+    });
+
+    function row(label, value){ return '<div class="row"><span>' + label + '</span><b>' + value + '</b></div>'; }
+    statsHost.innerHTML =
+      row("Room area", roomArea.toFixed(1) + " sq ft") +
+      row("Footprint used", footprintArea.toFixed(1) + " sq ft (" + footprintPct.toFixed(0) + "%)") +
+      row("Clear floor", clearFloor.toFixed(1) + " sq ft") +
+      row("Bench linear feet", benchLinearFt.toFixed(1) + " ft") +
+      row("Bench top covered", benchTopPct === null ? "—" : benchTopPct.toFixed(0) + "%") +
+      row("Items placed", String(itemCount));
+
+    var flags = [];
+    if (clearFloor < 25) flags.push({ level:"bad", text:"Clear floor is only " + clearFloor.toFixed(1) + " sq ft — below 25 sq ft, this room will feel unworkable." });
+    else if (clearFloor < 38) flags.push({ level:"warn", text:"Clear floor is " + clearFloor.toFixed(1) + " sq ft — under the 38 sq ft comfort threshold." });
+
+    if (benchTopPct !== null && benchTopPct > 75) flags.push({ level:"warn", text:"Bench top is " + benchTopPct.toFixed(0) + "% covered — over 75%, little room left to work." });
+
+    if (benchLinearFt < 10) flags.push({ level:"warn", text:"Only " + benchLinearFt.toFixed(1) + " linear ft of bench — under the 10 ft target." });
+
+    if (doorBlocked) flags.push({ level:"bad", text:"Door clearance is blocked — an item intrudes on the 30″ zone in front of the door." });
+
+    if (highDrawCount >= 3) flags.push({ level:"warn", text: highDrawCount + " high-draw units placed (fridge/freezer/shaking incubator) — confirm 2–3 dedicated 20 A circuits." });
+
+    if (flags.length === 0) flags.push({ level:"ok", text:"No layout warnings." });
+
+    flagsHost.innerHTML = flags.map(function(f){
+      return '<div class="flag ' + f.level + '">' + f.text + '</div>';
+    }).join("");
+  }
+
+  // ---------- Toolbar actions ----------
+  document.getElementById("btnSuggested").addEventListener("click", function(){
+    if (state.items.length && !window.confirm("Replace the current layout with the suggested starting layout?")) return;
+    state.items = suggestedLayout();
+    selectedUid = null;
+    saveState();
+    renderRoom();
+    renderStats();
+  });
+  document.getElementById("btnClear").addEventListener("click", function(){
+    if (state.items.length && !window.confirm("Remove all placed equipment?")) return;
+    state.items = [];
+    selectedUid = null;
+    saveState();
+    renderRoom();
+    renderStats();
+  });
+  document.getElementById("btnPrint").addEventListener("click", function(){
+    window.print();
+  });
+
+  // ---------- Tabs ----------
+  var tabButtons = document.querySelectorAll('nav.tabs button[role="tab"]');
+  var scanLoaded = false;
+  tabButtons.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      tabButtons.forEach(function(b){ b.setAttribute("aria-selected", b === btn ? "true" : "false"); });
+      document.querySelectorAll(".tabpanel").forEach(function(panel){
+        panel.classList.toggle("active", panel.id === btn.getAttribute("aria-controls"));
+      });
+      if (btn.id === "tabbtn-3d" && !scanLoaded) {
+        scanLoaded = true;
+        var viewer = document.getElementById("scanViewer");
+        viewer.setAttribute("src", "./lab-scan.glb");
+      }
+    });
+  });
+
+  // ---------- Equipment specs tab ----------
+  function renderSpecs(){
+    var tbody = document.querySelector("#specsTable tbody");
+    tbody.innerHTML = CATALOG.map(function(c){
+      var notes = c.highDraw ? "High draw — counts toward the dedicated-circuit check" : "";
+      return "<tr><td>" + c.name + "</td><td>" + GROUP_LABELS[c.group] + "</td><td>" + c.w + "″</td><td>" + c.d + "″</td><td>" + notes + "</td></tr>";
+    }).join("");
+  }
+
+  // ---------- Theme toggle ----------
+  var themeBtn = document.getElementById("themeToggle");
+  var THEME_ORDER = ["system", "light", "dark"];
+  var THEME_LABEL = { system:"Theme: System", light:"Theme: Light", dark:"Theme: Dark" };
+  function applyTheme(t){
+    if (t === "system") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", t);
+    themeBtn.textContent = THEME_LABEL[t];
+  }
+  var currentTheme = loadTheme();
+  applyTheme(currentTheme);
+  themeBtn.addEventListener("click", function(){
+    var idx = THEME_ORDER.indexOf(currentTheme);
+    currentTheme = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
+    applyTheme(currentTheme);
+    saveTheme(currentTheme);
+  });
+
+  // ---------- Init ----------
+  renderPalette();
+  loadState();
+  renderRoom();
+  renderStats();
+  renderSpecs();
+})();
+</script>
+</body>
+</html>
