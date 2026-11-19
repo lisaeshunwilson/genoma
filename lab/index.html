@@ -200,17 +200,24 @@
   .item{
     position:absolute;
     border-radius:3px;
-    font-size:.62rem;
+    font-size:.58rem;
     color: var(--ink);
     display:flex; align-items:center; justify-content:center; text-align:center;
     padding:2px;
     cursor:grab;
     user-select:none;
     touch-action:none;
-    line-height:1.15;
+    line-height:1.1;
     overflow:hidden;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    hyphens:auto;
   }
-  .item.bench{ background: var(--bench-fill); border:1px solid var(--bench-border); color:#0e2117; z-index:2; }
+  .item.bench{
+    background: var(--bench-fill); border:1px solid var(--bench-border); color:#0e2117; z-index:2;
+    align-items:flex-start; justify-content:flex-start; text-align:left;
+    padding:3px 5px; font-size:.56rem;
+  }
   .item.floor{ background: var(--floor-fill); border:2px solid var(--floor-border); z-index:2; }
   .item.benchtop{ background: var(--benchtop-fill); border:1px solid var(--benchtop-border); z-index:3; font-weight:600; }
   .item.selected{ outline:3px solid var(--green); outline-offset:1px; }
